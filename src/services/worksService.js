@@ -1,0 +1,124 @@
+import { supabase } from './supabase'
+
+export const worksService = {
+  // Récupérer toutes les œuvres publiées (public)
+  async getPublished(categoryId = null) {
+    let query = supabase
+      .from('works')
+      .select(`
+        *,
+        category:categories(*),
+        images:work_images(*)
+      `)
+      .eq('status', 'published')
+      .order('published_at', { ascending: false })
+    
+    if (categoryId) {
+      query = query.eq('category_id', categoryId)
+    }
+    
+    const { data, error } = await query
+    if (error) throw error
+    return data || []
+  },
+
+  // Récupérer une œuvre par slug (public)
+  async getBySlug(slug) {
+    const { data, error } = await supabase
+      .from('works')
+      .select(`
+        *,
+        category:categories(*),
+        images:work_images(*)
+      `)
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  // Récupérer toutes les œuvres (admin)
+  async getAll() {
+    const { data, error } = await supabase
+      .from('works')
+      .select(`
+        *,
+        category:categories(*),
+        images:work_images(*)
+      `)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data || []
+  },
+
+  // Récupérer une œuvre par ID (admin)
+  async getById(id) {
+    const { data, error } = await supabase
+      .from('works')
+      .select(`
+        *,
+        category:categories(*),
+        images:work_images(*)
+      `)
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  // Créer une œuvre (admin)
+  async create(workData) {
+    // Nettoyer les données avant insertion
+    const cleanData = {
+      title: workData.title,
+      slug: workData.slug,
+      description: workData.description || null,
+      category_id: workData.category_id,
+      status: workData.status || 'draft',
+      published_at: workData.status === 'published' ? new Date().toISOString() : null,
+      featured: workData.featured || false,
+      display_order: workData.display_order || 0
+    }
+
+    const { data, error } = await supabase
+      .from('works')
+      .insert([cleanData])
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  // Mettre à jour une œuvre (admin)
+  async update(id, updates) {
+    // Si on passe en published et qu'il n'y a pas de published_at
+    if (updates.status === 'published' && !updates.published_at) {
+      updates.published_at = new Date().toISOString()
+    }
+
+    const { data, error } = await supabase
+      .from('works')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  // Supprimer une œuvre (admin)
+  async delete(id) {
+    const { error } = await supabase
+      .from('works')
+      .delete()
+      .eq('id', id)
+    
+    if (error) throw error
+  }
+}
