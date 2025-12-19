@@ -1,6 +1,5 @@
 <template>
   <div class="admin-dashboard">
-    <h1>Tableau de bord</h1>
     
     <div class="stats">
       <div class="stat-card">
@@ -33,6 +32,7 @@
 import { onMounted, computed } from 'vue'
 import { useWorks } from '@/composables/useWorks'
 import { useCategories } from '@/composables/useCategories'
+import AdminLayout from '@/components/admin/AdminLayout.vue'
 
 const { works, fetchWorks } = useWorks(true)
 const { categories, fetchCategories } = useCategories()

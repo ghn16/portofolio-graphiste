@@ -38,8 +38,13 @@
 
       <div v-else class="upload-progress">
         <div class="spinner"></div>
-        <p>Upload en cours...</p>
+        <p>Upload en cours... {{ uploadProgress }}%</p>
       </div>
+    </div>
+
+    <!-- Message de succès temporaire -->
+    <div v-if="uploadSuccess" class="upload-success-message">
+      ✓ Image uploadée avec succès !
     </div>
 
     <div v-if="images.length" class="images-preview">
@@ -99,6 +104,8 @@ const emit = defineEmits(['upload-success', 'delete', 'set-cover'])
 const { uploadImage, uploading } = useStorage()
 const fileInput = ref(null)
 const isDragging = ref(false)
+const uploadSuccess = ref(false)
+const uploadProgress = ref(0)
 
 const handleFileSelect = async (event) => {
   const files = Array.from(event.target.files)
@@ -120,10 +127,47 @@ const uploadFiles = async (files) => {
   for (const file of files) {
     if (!file.type.startsWith('image/')) continue
     
-    const result = await uploadImage(file, props.workId)
-    if (result.success) {
-      emit('upload-success', result.data)
+    uploading.value = true
+    uploadSuccess.value = false
+    uploadProgress.value = 0
+    
+    try {
+      // Simuler la progression (Supabase ne fournit pas de vrai progress)
+      const progressInterval = setInterval(() => {
+        if (uploadProgress.value < 90) {
+          uploadProgress.value += 10
+        }
+      }, 100)
+      
+      const result = await uploadImage(file, props.workId)
+      
+      clearInterval(progressInterval)
+      uploadProgress.value = 100
+      
+      if (result.success) {
+        console.log('Upload completed, emitting:', result.data)
+        uploadSuccess.value = true
+        
+        // Émettre l'événement
+        emit('upload-success', result.data)
+        
+        // Masquer le message après 3 secondes
+        setTimeout(() => {
+          uploadSuccess.value = false
+        }, 3000)
+      }
+    } catch (err) {
+      console.error('Upload failed:', err)
+      error.value = err.message
+    } finally {
+      uploading.value = false
+      uploadProgress.value = 0
     }
+  }
+  
+  // Reset input
+  if (fileInput.value) {
+    fileInput.value.value = ''
   }
 }
 </script>
@@ -247,5 +291,28 @@ const uploadFiles = async (files) => {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.upload-success-message {
+  margin-top: 1rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.15) 0%, rgba(40, 167, 69, 0.05) 100%);
+  border: 2px solid rgba(40, 167, 69, 0.3);
+  border-radius: 12px;
+  color: #28A745;
+  font-weight: 600;
+  text-align: center;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

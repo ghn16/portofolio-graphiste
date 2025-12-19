@@ -2,22 +2,44 @@ import { supabase } from './supabase'
 
 export const storageService = {
   async uploadImage(file, workId) {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${workId}/${Date.now()}.${fileExt}`
-    
-    const { data, error } = await supabase.storage
-      .from('works-images')
-      .upload(fileName, file)
-    
-    if (error) throw error
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from('works-images')
-      .getPublicUrl(fileName)
-    
-    return {
-      url: publicUrl,
-      path: fileName
+    try {
+      const fileExt = file.name.split('.').pop().toLowerCase()
+      const fileName = `${workId}/${Date.now()}.${fileExt}`
+      
+      console.log('Uploading to:', fileName)
+      console.log('File type:', file.type)
+      console.log('File size:', file.size)
+      
+      // Upload le fichier
+      const { data, error } = await supabase.storage
+        .from('works-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type
+        })
+      
+      if (error) {
+        console.error('Upload error:', error)
+        throw error
+      }
+      
+      console.log('Upload success:', data)
+      
+      // Récupérer l'URL publique
+      const { data: { publicUrl } } = supabase.storage
+        .from('works-images')
+        .getPublicUrl(fileName)
+      
+      console.log('Public URL:', publicUrl)
+      
+      return {
+        url: publicUrl,
+        path: fileName
+      }
+    } catch (error) {
+      console.error('Storage service error:', error)
+      throw error
     }
   },
 

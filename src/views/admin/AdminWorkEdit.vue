@@ -1,609 +1,633 @@
 <template>
-  <div class="admin-works">
+  <div class="admin-work-edit">
     <div class="page-header">
-      <div>
-        <h1>Mes œuvres</h1>
-        <p class="subtitle">Gérez votre portfolio créatif</p>
-      </div>
-      <router-link to="/admin/works/new" class="btn btn-accent btn-lg">
+      <button @click="$router.back()" class="btn-back">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 5v14M5 12h14"/>
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
-        Nouvelle œuvre
-      </router-link>
+        Retour
+      </button>
+      <h1>{{ isNew ? 'Nouvelle œuvre' : 'Modifier l\'œuvre' }}</h1>
     </div>
 
-    <!-- Statistiques -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon published">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-            <polyline points="22 4 12 14.01 9 11.01"/>
-          </svg>
-        </div>
-        <div class="stat-content">
-          <h3>{{ publishedCount }}</h3>
-          <p>Publiées</p>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon draft">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-          </svg>
-        </div>
-        <div class="stat-content">
-          <h3>{{ draftCount }}</h3>
-          <p>Brouillons</p>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon total">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7"/>
-            <rect x="14" y="3" width="7" height="7"/>
-            <rect x="14" y="14" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/>
-          </svg>
-        </div>
-        <div class="stat-content">
-          <h3>{{ works.length }}</h3>
-          <p>Total</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- État de chargement -->
-    <div v-if="loading" class="loading-state">
-      <div class="spinner"></div>
-      <p>Chargement des œuvres...</p>
-    </div>
-
-    <!-- Liste vide -->
-    <div v-else-if="works.length === 0" class="empty-state">
-      <div class="empty-icon">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-          <circle cx="8.5" cy="8.5" r="1.5"/>
-          <polyline points="21 15 16 10 5 21"/>
-        </svg>
-      </div>
-      <h2>Aucune œuvre pour le moment</h2>
-      <p>Commencez par créer votre première œuvre pour enrichir votre portfolio</p>
-      <router-link to="/admin/works/new" class="btn btn-primary btn-lg">
-        Créer ma première œuvre
-      </router-link>
-    </div>
-
-    <!-- Grille des œuvres -->
-    <div v-else class="works-grid">
-      <div 
-        v-for="work in works"
-        :key="work.id"
-        class="work-card"
-      >
-        <!-- Image -->
-        <div class="work-image">
-          <img 
-            :src="getCoverImage(work)" 
-            :alt="work.title"
+    <div class="form-container">
+      <form @submit.prevent="handleSubmit">
+        <!-- Titre -->
+        <div class="form-group">
+          <label for="title">Titre *</label>
+          <input 
+            id="title"
+            v-model="form.title" 
+            type="text" 
+            class="form-input"
+            placeholder="Ex: Logo pour entreprise tech"
+            required
           >
-          <div class="work-overlay">
-            <router-link 
-              :to="`/admin/works/${work.id}/edit`"
-              class="btn-icon btn-edit-overlay"
-              title="Modifier"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-            </router-link>
-          </div>
-          <span class="work-status" :class="work.status">
-            {{ work.status === 'published' ? 'Publié' : 'Brouillon' }}
-          </span>
         </div>
 
-        <!-- Contenu -->
-        <div class="work-content">
-          <div class="work-header">
-            <h3 class="work-title">{{ work.title }}</h3>
-            <span v-if="work.category" class="work-category">
-              {{ work.category.name }}
-            </span>
+        <!-- Catégorie -->
+        <div class="form-group">
+          <label for="category">Catégorie *</label>
+          <div class="category-select-wrapper">
+            <select 
+              id="category"
+              v-model="form.category_id" 
+              class="form-select"
+              required
+            >
+              <option value="">Sélectionner une catégorie...</option>
+              <option 
+                v-for="cat in categories"
+                :key="cat.id"
+                :value="cat.id"
+              >
+                {{ cat.name }}
+              </option>
+            </select>
+            <router-link to="/admin/categories" class="btn-manage-categories">
+              Gérer les catégories
+            </router-link>
           </div>
-
-          <p v-if="work.description" class="work-description">
-            {{ truncateDescription(work.description) }}
+          <p v-if="categories.length === 0" class="form-hint warning">
+            ⚠️ Aucune catégorie disponible. 
+            <router-link to="/admin/categories">Créez-en une d'abord</router-link>
           </p>
-
-          <div class="work-meta">
-            <span class="meta-item">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-              {{ work.images?.length || 0 }} image{{ work.images?.length > 1 ? 's' : '' }}
-            </span>
-            <span class="meta-item">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
-              {{ formatDate(work.created_at) }}
-            </span>
-          </div>
-
-          <!-- Actions -->
-          <div class="work-actions">
-            <router-link 
-              :to="`/admin/works/${work.id}/edit`"
-              class="btn btn-primary btn-sm"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-              Modifier
-            </router-link>
-            <button 
-              @click="handleDelete(work.id, work.title)"
-              class="btn btn-ghost btn-sm btn-danger"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              </svg>
-              Supprimer
-            </button>
-          </div>
         </div>
-      </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea 
+            id="description"
+            v-model="form.description" 
+            class="form-textarea"
+            rows="6"
+            placeholder="Décrivez votre projet, le contexte, les défis relevés..."
+          ></textarea>
+        </div>
+
+        <!-- Statut -->
+        <div class="form-group">
+          <label for="status">Statut</label>
+          <select 
+            id="status"
+            v-model="form.status" 
+            class="form-select"
+          >
+            <option value="draft">Brouillon (non visible publiquement)</option>
+            <option value="published">Publié (visible sur le site)</option>
+          </select>
+        </div>
+
+        <!-- Upload d'images -->
+        <div class="form-group" v-if="savedWorkId || (!isNew && currentWork?.id)">
+          <label>Images du projet</label>
+          <ImageUploader 
+            :work-id="savedWorkId || currentWork.id"
+            :images="workImages"
+            @upload-success="handleImageUpload"
+            @delete="handleImageDelete"
+            @set-cover="handleSetCover"
+          />
+          <p class="form-hint">
+            💡 Cliquez sur l'étoile pour définir l'image de couverture
+          </p>
+        </div>
+
+        <div v-else class="info-box">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <p>Créez d'abord l'œuvre, puis vous pourrez ajouter des images</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button 
+            type="submit" 
+            class="btn btn-primary btn-lg"
+            :disabled="saving || categories.length === 0"
+          >
+            {{ saving ? 'Enregistrement...' : (isNew ? 'Créer l\'œuvre' : 'Enregistrer les modifications') }}
+          </button>
+          <button 
+            type="button" 
+            @click="$router.back()" 
+            class="btn btn-ghost btn-lg"
+          >
+            Annuler
+          </button>
+          
+          <!-- Bouton supprimer (uniquement en mode édition) -->
+          <button 
+            v-if="!isNew"
+            type="button" 
+            @click="handleDeleteWork" 
+            class="btn btn-danger btn-lg"
+          >
+            Supprimer l'œuvre
+          </button>
+        </div>
+
+        <!-- Message de succès/erreur -->
+        <div v-if="successMessage" class="alert alert-success">
+          ✓ {{ successMessage }}
+        </div>
+        <div v-if="errorMessage" class="alert alert-error">
+          ✗ {{ errorMessage }}
+          <details style="margin-top: 0.5rem; font-size: 0.875rem;">
+            <summary style="cursor: pointer;">Détails techniques</summary>
+            <pre style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.1); border-radius: 4px; overflow-x: auto;">{{ errorMessage }}</pre>
+          </details>
+        </div>
+      </form>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useWorks } from '@/composables/useWorks'
+import { useCategories } from '@/composables/useCategories'
+import { storageService } from '@/services/storageService'
+import { slugify } from '@/utils/slugify'
+import ImageUploader from '@/components/admin/ImageUploader.vue'
 
-const { works, loading, fetchWorks, deleteWork } = useWorks(true)
+const route = useRoute()
+const router = useRouter()
+const { createWork, updateWork, fetchWorkById, currentWork, deleteWork } = useWorks(true)
+const { categories, fetchCategories } = useCategories()
 
-const publishedCount = computed(() => 
-  works.value.filter(w => w.status === 'published').length
-)
+const isNew = computed(() => route.name === 'admin-work-new')
+const savedWorkId = ref(null)
+const saving = ref(false)
+const successMessage = ref('')
+const errorMessage = ref('')
 
-const draftCount = computed(() => 
-  works.value.filter(w => w.status === 'draft').length
-)
+const form = ref({
+  title: '',
+  slug: '',
+  description: '',
+  category_id: '',
+  status: 'draft'
+})
 
-const getCoverImage = (work) => {
-  const cover = work.images?.find(img => img.is_cover)
-  return cover?.image_url || work.images?.[0]?.image_url || 'https://via.placeholder.com/400x300/3A2665/FFFFFF?text=Aucune+image'
-}
+const workImages = ref([])
 
-const truncateDescription = (description) => {
-  if (!description) return ''
-  return description.length > 120 
-    ? description.substring(0, 120) + '...' 
-    : description
-}
+const handleSubmit = async () => {
+  saving.value = true
+  successMessage.value = ''
+  errorMessage.value = ''
 
-const formatDate = (date) => {
-  if (!date) return 'Date inconnue'
-  const d = new Date(date)
-  return d.toLocaleDateString('fr-FR', { 
-    day: 'numeric', 
-    month: 'short', 
-    year: 'numeric' 
-  })
-}
+  try {
+    // Générer un slug UNIQUE avec timestamp dès le départ
+    const baseSlug = slugify(form.value.title)
+    
+    // Pour une nouvelle œuvre, toujours ajouter un timestamp pour garantir l'unicité
+    if (isNew.value) {
+      form.value.slug = `${baseSlug}-${Date.now()}`
+    } else {
+      // Pour une modification, garder le slug existant
+      form.value.slug = currentWork.value?.slug || baseSlug
+    }
+    
+    // Ajouter published_at si on publie
+    if (form.value.status === 'published' && !form.value.published_at) {
+      form.value.published_at = new Date().toISOString()
+    }
 
-const handleDelete = async (id, title) => {
-  if (confirm(`Êtes-vous sûr de vouloir supprimer "${title}" ?\n\nCette action est irréversible.`)) {
-    await deleteWork(id)
+    if (isNew.value) {
+      // Création
+      const result = await createWork(form.value)
+      if (result.success) {
+        savedWorkId.value = result.data.id
+        
+        // Message de succès persistant
+        successMessage.value = '✓ Œuvre créée avec succès ! Vous pouvez maintenant ajouter des images.'
+        
+        // Scroll vers le haut pour voir le message
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        
+        // Mettre à jour l'URL sans recharger
+        window.history.replaceState({}, '', `/admin/works/${result.data.id}/edit`)
+        
+        // Ne pas effacer le message automatiquement
+      } else {
+        errorMessage.value = result.error || 'Erreur lors de la création'
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    } else {
+      // Modification
+      const result = await updateWork(route.params.id, form.value)
+      if (result.success) {
+        successMessage.value = '✓ Modifications enregistrées avec succès !'
+        setTimeout(() => {
+          router.push('/admin/works')
+        }, 1500)
+      } else {
+        errorMessage.value = result.error || 'Erreur lors de la modification'
+      }
+    }
+  } catch (error) {
+    console.error('Error in handleSubmit:', error)
+    errorMessage.value = error.message || 'Une erreur est survenue'
+  } finally {
+    saving.value = false
   }
 }
 
-onMounted(() => {
-  fetchWorks()
+const handleImageUpload = async (imageData) => {
+  try {
+    const workId = savedWorkId.value || route.params.id
+    
+    console.log('Adding image to work:', workId, imageData)
+    
+    // Ajouter l'image à la base de données
+    const result = await storageService.addImageToWork(
+      workId,
+      imageData.url,
+      imageData.path,
+      '',
+      workImages.value.length === 0 // Première image = cover par défaut
+    )
+    
+    if (result.success) {
+      // Ajouter l'image à la liste locale IMMÉDIATEMENT
+      workImages.value.push(result.data)
+      
+      // Message de succès
+      successMessage.value = '✓ Image ajoutée avec succès'
+      
+      // Effacer le message après 3 secondes
+      setTimeout(() => { 
+        successMessage.value = '' 
+      }, 3000)
+      
+      console.log('Image added successfully:', result.data)
+      console.log('Total images:', workImages.value.length)
+    } else {
+      errorMessage.value = 'Erreur lors de l\'ajout de l\'image'
+    }
+  } catch (error) {
+    console.error('Error in handleImageUpload:', error)
+    errorMessage.value = 'Erreur lors de l\'ajout de l\'image'
+  }
+}
+
+const handleImageDelete = async (imageId, storagePath) => {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer cette image ?')) return
+  
+  try {
+    const result = await storageService.removeImageFromWork(imageId, storagePath)
+    if (result.success) {
+      workImages.value = workImages.value.filter(img => img.id !== imageId)
+      successMessage.value = '✓ Image supprimée'
+      setTimeout(() => { successMessage.value = '' }, 3000)
+    }
+  } catch (error) {
+    errorMessage.value = 'Erreur lors de la suppression'
+  }
+}
+
+const handleSetCover = async (imageId) => {
+  try {
+    const workId = savedWorkId.value || route.params.id
+    
+    // Mettre à jour via le service
+    await storageService.updateImageCover(imageId, workId)
+    
+    // Mettre à jour localement
+    workImages.value = workImages.value.map(img => ({
+      ...img,
+      is_cover: img.id === imageId
+    }))
+    
+    successMessage.value = '✓ Image de couverture définie'
+    setTimeout(() => { successMessage.value = '' }, 3000)
+  } catch (error) {
+    errorMessage.value = 'Erreur lors de la mise à jour'
+  }
+}
+
+const handleDeleteWork = async () => {
+  const confirmMessage = `⚠️ ATTENTION : Suppression définitive\n\n` +
+    `Cette action supprimera :\n` +
+    `• L'œuvre "${form.value.title}"\n` +
+    `• Toutes ses images (${workImages.value.length})\n` +
+    `• De manière IRRÉVERSIBLE\n\n` +
+    `Tapez "SUPPRIMER" pour confirmer :`
+  
+  const userInput = prompt(confirmMessage)
+  
+  if (userInput === 'SUPPRIMER') {
+    saving.value = true
+    try {
+      const result = await deleteWork(route.params.id)
+      if (result.success) {
+        alert('✓ Œuvre supprimée avec succès')
+        router.push('/admin/works')
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      errorMessage.value = 'Erreur lors de la suppression : ' + error.message
+    } finally {
+      saving.value = false
+    }
+  } else if (userInput !== null) {
+    alert('❌ Suppression annulée : vous devez taper exactement "SUPPRIMER"')
+  }
+}
+
+onMounted(async () => {
+  await fetchCategories()
+  
+  if (!isNew.value) {
+    await fetchWorkById(route.params.id)
+    if (currentWork.value) {
+      form.value = {
+        title: currentWork.value.title,
+        slug: currentWork.value.slug,
+        description: currentWork.value.description || '',
+        category_id: currentWork.value.category_id,
+        status: currentWork.value.status,
+        published_at: currentWork.value.published_at
+      }
+      // Copier les images
+      workImages.value = [...(currentWork.value.images || [])]
+      savedWorkId.value = currentWork.value.id
+      
+      console.log('Work loaded with images:', workImages.value.length)
+    }
+  }
 })
 </script>
 
 <style scoped>
-.admin-works {
-  padding: 2rem;
-  max-width: 1400px;
+.admin-work-edit {
+  max-width: 900px;
   margin: 0 auto;
+  padding: 2rem;
 }
 
-/* Header */
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 2rem;
 }
 
-.page-header h1 {
-  font-size: 2rem;
-  color: #1E183A;
-  margin: 0 0 0.5rem 0;
-}
-
-.subtitle {
-  color: #6C757D;
-  margin: 0;
-}
-
-/* Statistiques */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2.5rem;
-}
-
-.stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(58, 38, 101, 0.08);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.stat-icon.published {
-  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.2) 100%);
-  color: #28A745;
-}
-
-.stat-icon.draft {
-  background: linear-gradient(135deg, rgba(245, 156, 26, 0.1) 0%, rgba(245, 156, 26, 0.2) 100%);
-  color: #F59C1A;
-}
-
-.stat-icon.total {
-  background: linear-gradient(135deg, rgba(58, 38, 101, 0.1) 0%, rgba(237, 0, 226, 0.1) 100%);
-  color: #3A2665;
-}
-
-.stat-content h3 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1E183A;
-  margin: 0;
-  line-height: 1;
-}
-
-.stat-content p {
-  font-size: 0.875rem;
-  color: #6C757D;
-  margin: 0.25rem 0 0 0;
-}
-
-/* Loading */
-.loading-state {
-  text-align: center;
-  padding: 4rem 2rem;
-  color: #6C757D;
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #F8F9FA;
-  border-top-color: #3A2665;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 1.5rem;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(58, 38, 101, 0.08);
-}
-
-.empty-icon {
-  display: inline-flex;
-  width: 120px;
-  height: 120px;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, rgba(58, 38, 101, 0.05) 0%, rgba(237, 0, 226, 0.05) 100%);
-  border-radius: 50%;
-  color: #3A2665;
-  margin-bottom: 2rem;
-}
-
-.empty-state h2 {
-  color: #1E183A;
-  margin-bottom: 0.75rem;
-}
-
-.empty-state p {
-  color: #6C757D;
-  margin-bottom: 2rem;
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* Grille des œuvres */
-.works-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 2rem;
-}
-
-.work-card {
-  background: white;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 2px 12px rgba(58, 38, 101, 0.08);
-  transition: all 0.3s ease;
-}
-
-.work-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 30px rgba(58, 38, 101, 0.15);
-}
-
-/* Image fixe */
-.work-image {
-  position: relative;
-  width: 100%;
-  height: 240px;
-  background: linear-gradient(135deg, #3A2665 0%, #1E183A 100%);
-  overflow: hidden;
-}
-
-.work-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
-
-.work-card:hover .work-image img {
-  transform: scale(1.05);
-}
-
-.work-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(58, 38, 101, 0.8) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.work-card:hover .work-overlay {
-  opacity: 1;
-}
-
-.btn-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: white;
-  color: #3A2665;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-.btn-icon:hover {
-  background: #F59C1A;
-  color: white;
-  transform: scale(1.1);
-}
-
-.work-status {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  backdrop-filter: blur(10px);
-}
-
-.work-status.published {
-  background: rgba(40, 167, 69, 0.9);
-  color: white;
-}
-
-.work-status.draft {
-  background: rgba(245, 156, 26, 0.9);
-  color: white;
-}
-
-/* Contenu */
-.work-content {
-  padding: 1.5rem;
-}
-
-.work-header {
-  margin-bottom: 1rem;
-}
-
-.work-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1E183A;
-  margin: 0 0 0.5rem 0;
-  line-height: 1.3;
-}
-
-.work-category {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  background: linear-gradient(135deg, rgba(58, 38, 101, 0.1) 0%, rgba(237, 0, 226, 0.1) 100%);
-  color: #3A2665;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.work-description {
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: #6C757D;
-  margin: 0 0 1rem 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.work-meta {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid #F8F9FA;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.875rem;
-  color: #6C757D;
-}
-
-.meta-item svg {
-  flex-shrink: 0;
-}
-
-/* Actions */
-.work-actions {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.btn {
+.btn-back {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
   border: none;
-  border-radius: 10px;
-  font-size: 0.875rem;
+  color: #3A2665;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-decoration: none;
-  justify-content: center;
+  margin-bottom: 1rem;
 }
 
-.btn-sm {
-  padding: 0.6rem 1rem;
-  font-size: 0.875rem;
+.btn-back:hover {
+  color: #F59C1A;
+  transform: translateX(-4px);
 }
 
-.btn-lg {
-  padding: 1rem 1.75rem;
+.page-header h1 {
+  color: #1E183A;
+  margin: 0;
+}
+
+.form-container {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 20px rgba(58, 38, 101, 0.1);
+}
+
+.form-group {
+  margin-bottom: 2rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: #1E183A;
   font-size: 1rem;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #1E183A;
+  background: #F8F9FA;
+  border: 2px solid #E9ECEF;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  outline: none;
+  border-color: #3A2665;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(58, 38, 101, 0.1);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 150px;
+  line-height: 1.6;
+}
+
+.category-select-wrapper {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.category-select-wrapper .form-select {
+  flex: 1;
+}
+
+.btn-manage-categories {
+  padding: 0.875rem 1.5rem;
+  background: #F8F9FA;
+  color: #3A2665;
+  border: 2px solid #E9ECEF;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.btn-manage-categories:hover {
+  background: #3A2665;
+  color: white;
+  border-color: #3A2665;
+}
+
+.form-hint {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #6C757D;
+}
+
+.form-hint.warning {
+  color: #F59C1A;
+}
+
+.form-hint a {
+  color: #3A2665;
+  font-weight: 600;
+}
+
+.info-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(58, 38, 101, 0.05) 0%, rgba(237, 0, 226, 0.05) 100%);
+  border: 2px solid rgba(58, 38, 101, 0.1);
+  border-radius: 12px;
+  color: #3A2665;
+}
+
+.info-box svg {
+  flex-shrink: 0;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 2px solid #F8F9FA;
+}
+
+.btn {
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .btn-primary {
   background: linear-gradient(135deg, #3A2665 0%, #1E183A 100%);
   color: white;
-  flex: 1;
+  box-shadow: 0 4px 15px rgba(58, 38, 101, 0.3);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(58, 38, 101, 0.3);
+  box-shadow: 0 6px 20px rgba(58, 38, 101, 0.4);
 }
 
-.btn-accent {
-  background: linear-gradient(135deg, #F59C1A 0%, #D48310 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(245, 156, 26, 0.3);
-}
-
-.btn-accent:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(245, 156, 26, 0.4);
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .btn-ghost {
   background: transparent;
   color: #6C757D;
-  border: 2px solid #E9ECEF;
 }
 
 .btn-ghost:hover {
   background: #F8F9FA;
-  border-color: #DEE2E6;
+  color: #3A2665;
+}
+
+.btn-danger {
+  background: white;
+  color: #DC3545;
+  border: 2px solid #DC3545;
+  margin-left: auto;
 }
 
 .btn-danger:hover {
-  background: rgba(220, 53, 69, 0.1);
-  border-color: #DC3545;
+  background: #DC3545;
+  color: white;
+}
+
+.btn-lg {
+  padding: 1rem 2.5rem;
+}
+
+.alert {
+  margin-top: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-success {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.15) 0%, rgba(40, 167, 69, 0.05) 100%);
+  color: #28A745;
+  border: 2px solid rgba(40, 167, 69, 0.3);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+}
+
+.alert-error {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.15) 0%, rgba(220, 53, 69, 0.05) 100%);
   color: #DC3545;
+  border: 2px solid rgba(220, 53, 69, 0.3);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .admin-works {
+  .admin-work-edit {
     padding: 1rem;
   }
-
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+  
+  .form-container {
+    padding: 1.5rem;
   }
-
-  .page-header .btn {
+  
+  .category-select-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .btn-manage-categories {
     width: 100%;
+    text-align: center;
   }
-
-  .works-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .work-actions {
+  
+  .form-actions {
     flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
   }
 }
 </style>

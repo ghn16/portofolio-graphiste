@@ -75,9 +75,9 @@ export const worksService = {
     // Nettoyer les données avant insertion
     const cleanData = {
       title: workData.title,
-      slug: workData.slug,
+      slug: workData.slug, // Le slug arrive déjà avec timestamp
       description: workData.description || null,
-      category_id: workData.category_id,
+      category_id: workData.category_id || null,
       status: workData.status || 'draft',
       published_at: workData.status === 'published' ? new Date().toISOString() : null,
       featured: workData.featured || false,
@@ -90,7 +90,11 @@ export const worksService = {
       .select()
       .single()
     
-    if (error) throw error
+    if (error) {
+      console.error('Supabase error:', error)
+      throw error
+    }
+    
     return data
   },
 
@@ -114,6 +118,21 @@ export const worksService = {
 
   // Supprimer une œuvre (admin)
   async delete(id) {
+    // 1. Récupérer toutes les images liées à cette œuvre
+    const { data: images } = await supabase
+      .from('work_images')
+      .select('storage_path')
+      .eq('work_id', id)
+    
+    // 2. Supprimer les images du storage
+    if (images && images.length > 0) {
+      const paths = images.map(img => img.storage_path)
+      await supabase.storage
+        .from('works-images')
+        .remove(paths)
+    }
+    
+    // 3. Supprimer l'œuvre (les images liées seront supprimées via CASCADE)
     const { error } = await supabase
       .from('works')
       .delete()

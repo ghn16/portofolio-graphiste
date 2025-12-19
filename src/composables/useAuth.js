@@ -1,14 +1,12 @@
-// ============================================
-// FILE: src/composables/useAuth.js
-// Version corrigée sans useRouter global
-// ============================================
 import { ref, computed } from 'vue'
 import { authService } from '@/services/authService'
+import { useRouter } from 'vue-router'
 
 const user = ref(null)
 const loading = ref(false)
 
 export function useAuth() {
+  const router = useRouter()
   const isAuthenticated = computed(() => !!user.value)
 
   const signIn = async (email, password) => {
@@ -16,7 +14,8 @@ export function useAuth() {
     try {
       const data = await authService.signIn(email, password)
       user.value = data.user
-      return { success: true, user: data.user }
+      router.push('/admin')
+      return { success: true }
     } catch (error) {
       return { success: false, error: error.message }
     } finally {
@@ -28,10 +27,9 @@ export function useAuth() {
     try {
       await authService.signOut()
       user.value = null
-      return { success: true }
+      router.push('/admin/login')
     } catch (error) {
       console.error('Sign out error:', error)
-      return { success: false, error: error.message }
     }
   }
 
