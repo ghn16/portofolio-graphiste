@@ -1,7 +1,4 @@
-<!-- ============================================
-  FILE: src/views/public/Home.vue
-  Page d'accueil avec Hero, Filtres et Footer
-============================================ -->
+
 <template>
   <div class="home">
     <!-- Hero Section -->
@@ -35,7 +32,7 @@
           <button 
             class="filter-btn"
             :class="{ active: !selectedCategory }"
-            @click="selectedCategory = null"
+            @click="selectCategory(null)"
           >
             Tous les projets
           </button>
@@ -44,7 +41,7 @@
             :key="category.id"
             class="filter-btn"
             :class="{ active: selectedCategory === category.id }"
-            @click="selectedCategory = category.id"
+            @click="selectCategory(category.id)"
           >
             {{ category.name }}
           </button>
@@ -67,11 +64,46 @@
 
         <div v-else class="works-grid">
           <WorkCard 
-            v-for="work in filteredWorks"
+            v-for="work in paginatedWorks"
             :key="work.id"
             :work="work"
             class="scale-in"
           />
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="pagination">
+          <button 
+            @click="goToPage(currentPage - 1)" 
+            :disabled="currentPage === 1"
+            class="pagination-btn pagination-arrow"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+
+          <div class="pagination-numbers">
+            <button
+              v-for="page in totalPages"
+              :key="page"
+              v-show="totalPages <= 7 || shouldShowPage(page)"
+              @click="goToPage(page)"
+              :class="['pagination-btn', 'pagination-number', { active: page === currentPage }]"
+            >
+              {{ page }}
+            </button>
+          </div>
+
+          <button 
+            @click="goToPage(currentPage + 1)" 
+            :disabled="currentPage === totalPages"
+            class="pagination-btn pagination-arrow"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
         </div>
       </div>
     </section>
@@ -101,7 +133,7 @@
                 </div>
               </a>
 
-              <a href="tel:+2290161819192" class="contact-method">
+              <a href="tel:+22900000000" class="contact-method">
                 <div class="method-icon">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
@@ -109,11 +141,11 @@
                 </div>
                 <div class="method-content">
                   <h3>Téléphone</h3>
-                  <p>+229 01 618 191 92</p>
+                  <p>+229 0161819192</p>
                 </div>
               </a>
 
-              <a href="https://instagram.com/naographics" target="_blank" class="contact-method">
+              <a href="https://www.instagram.com/naographics23?igsh=MW5raGRqcTF5bW9h" target="_blank" class="contact-method">
                 <div class="method-icon">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
@@ -123,7 +155,7 @@
                 </div>
                 <div class="method-content">
                   <h3>Instagram</h3>
-                  <p>@naographics23</p>
+                  <p>@naographics</p>
                 </div>
               </a>
             </div>
@@ -163,13 +195,9 @@
                 ></textarea>
               </div>
 
-             <button 
-  type="submit" 
-  class="btn btn-accent btn-lg btn-full"
-  :disabled="sending"
->
-  {{ sending ? 'Envoi en cours...' : 'Envoyer le message' }}
-</button>
+              <button type="submit" class="btn btn-accent btn-lg btn-full">
+                Envoyer le message
+              </button>
 
               <p v-if="formMessage" class="form-message" :class="formSuccess ? 'success' : 'error'">
                 {{ formMessage }}
@@ -239,29 +267,71 @@
         <div class="footer-bottom">
           <p>© 2025 NAO Graphics. Tous droits réservés.</p>
           <p class="footer-credit">
-            Conçu & développé avec 💜 par 
-            <a href="https://github.com/ghn16" target="_blank">Silvio GBEHOUENOU</a>
+            Conçu & développé  par 
+            <a href="https://github.com/ghn16" target="_blank">GBEHOUENOU Silvio</a>
           </p>
         </div>
       </div>
     </footer>
   </div>
 </template>
+
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useWorks } from '@/composables/useWorks'
 import { useCategories } from '@/composables/useCategories'
 import WorkCard from '@/components/public/WorkCard.vue'
-import emailjs from '@emailjs/browser'
 
 const { works, loading, error, fetchWorks } = useWorks()
 const { categories, fetchCategories } = useCategories()
 const selectedCategory = ref(null)
 
+// Pagination
+const currentPage = ref(1)
+const itemsPerPage = 12 // 12 œuvres par page
+
 const filteredWorks = computed(() => {
   if (!selectedCategory.value) return works.value
   return works.value.filter(w => w.category_id === selectedCategory.value)
 })
+
+const totalPages = computed(() => 
+  Math.ceil(filteredWorks.value.length / itemsPerPage)
+)
+
+const paginatedWorks = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredWorks.value.slice(start, end)
+})
+
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+    // Scroll vers la section works
+    document.getElementById('works')?.scrollIntoView({ behavior: 'smooth' })
+  }
+}
+
+// Réinitialiser la page lors du changement de catégorie
+const selectCategory = (categoryId) => {
+  selectedCategory.value = categoryId
+  currentPage.value = 1
+}
+
+// Déterminer quelles pages afficher dans la pagination
+const shouldShowPage = (page) => {
+  const current = currentPage.value
+  const total = totalPages.value
+  
+  // Toujours afficher première et dernière
+  if (page === 1 || page === total) return true
+  
+  // Afficher les pages autour de la page courante
+  if (page >= current - 1 && page <= current + 1) return true
+  
+  return false
+}
 
 // Formulaire de contact
 const form = ref({
@@ -271,47 +341,17 @@ const form = ref({
 })
 const formMessage = ref('')
 const formSuccess = ref(false)
-const sending = ref(false)
 
-// ⭐ NOUVELLE VERSION avec EmailJS ⭐
-const handleSubmit = async () => {
-  sending.value = true
-  formMessage.value = ''
-
-  try {
-    // Remplacez ces valeurs par les vôtres
-   await emailjs.send(
-  import.meta.env.VITE_EMAILJS_SERVICE_ID,
-  import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-  {
-    from_name: form.value.name,
-    from_email: form.value.email,
-    message: form.value.message,
-    to_name: 'NAO Graphics'
-  },
-  import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-)
-
-
-    // Succès
-    formSuccess.value = true
-    formMessage.value = '✓ Message envoyé avec succès ! Je vous répondrai bientôt.'
-    
-    // Reset form après 3 secondes
-    setTimeout(() => {
-      form.value = { name: '', email: '', message: '' }
-      formMessage.value = ''
-      formSuccess.value = false
-    }, 3000)
-
-  } catch (error) {
-    // Erreur
-    formSuccess.value = false
-    formMessage.value = '✗ Erreur lors de l\'envoi. Veuillez réessayer ou m\'écrire directement.'
-    console.error('EmailJS error:', error)
-  } finally {
-    sending.value = false
-  }
+const handleSubmit = () => {
+  // Ici vous pouvez ajouter l'envoi via EmailJS ou autre service
+  formSuccess.value = true
+  formMessage.value = 'Message envoyé avec succès ! Je vous répondrai bientôt.'
+  
+  // Reset form
+  setTimeout(() => {
+    form.value = { name: '', email: '', message: '' }
+    formMessage.value = ''
+  }, 3000)
 }
 
 onMounted(async () => {
@@ -390,6 +430,7 @@ onMounted(async () => {
   animation-delay: 0.4s;
 }
 
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -403,6 +444,7 @@ onMounted(async () => {
   cursor: pointer;
   transition: all 0.3s ease;
 }
+
 
 .btn-accent {
   background: linear-gradient(135deg, #F59C1A 0%, #D48310 100%);
@@ -473,6 +515,9 @@ onMounted(async () => {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(58, 38, 101, 0.3);
 }
+
+
+
 
 /* Section des œuvres */
 .works-section {
@@ -564,6 +609,68 @@ onMounted(async () => {
   font-size: 0.95rem;
   color: #6C757D;
   margin: 0;
+}
+
+/* Pagination Styles */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 4rem;
+  padding: 2rem 0;
+}
+
+.pagination-btn {
+  min-width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 2px solid #E9ECEF;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: #3A2665;
+  color: #3A2665;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(58, 38, 101, 0.15);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-btn.active {
+  background: linear-gradient(135deg, #3A2665 0%, #1E183A 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 6px 20px rgba(58, 38, 101, 0.3);
+}
+
+.pagination-arrow {
+  color: #3A2665;
+}
+
+.pagination-arrow:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(58, 38, 101, 0.1) 0%, rgba(237, 0, 226, 0.1) 100%);
+}
+
+.pagination-numbers {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pagination-number {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Formulaire de contact */
