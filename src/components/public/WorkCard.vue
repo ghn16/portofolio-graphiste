@@ -52,6 +52,9 @@ const coverImage = computed(() => {
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(58, 38, 101, 0.1);
   transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .work-card:hover {
@@ -61,20 +64,22 @@ const coverImage = computed(() => {
 
 .work-card__image {
   position: relative;
-  aspect-ratio: 4/3;
+  width: 100%;
   overflow: hidden;
   background: linear-gradient(135deg, #3A2665 0%, #1E183A 100%);
+  flex-shrink: 0;
 }
 
 .work-card__image img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  display: block;
+  object-fit: contain;
   transition: transform 0.5s ease;
 }
 
 .work-card:hover .work-card__image img {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .work-card__overlay {
@@ -111,6 +116,9 @@ const coverImage = computed(() => {
 
 .work-card__content {
   padding: 1.5rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .work-card__category {
@@ -124,6 +132,7 @@ const coverImage = computed(() => {
   color: white;
   border-radius: 20px;
   margin-bottom: 0.75rem;
+  align-self: flex-start;
 }
 
 .work-card__title {

@@ -392,20 +392,22 @@ onMounted(() => {
 .main-image-container {
   position: relative;
   width: 100%;
-  border-radius: 20px;
-  overflow: hidden;
-  background: #1E183A;
   margin-bottom: 1.5rem;
-  box-shadow: 0 10px 40px rgba(58, 38, 101, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .main-image {
-  width: 100%;
+  max-width: 100%;
+  width: auto;
   height: auto;
   max-height: 70vh;
   object-fit: contain;
   cursor: zoom-in;
   display: block;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(58, 38, 101, 0.2);
 }
 
 .btn-fullscreen {
