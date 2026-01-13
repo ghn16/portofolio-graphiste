@@ -1,4 +1,3 @@
-
 <template>
   <div class="home">
     <!-- Hero Section -->
@@ -25,25 +24,47 @@
       <div class="hero-decoration"></div>
     </header>
 
-    <!-- Filtres de catégories -->
+    <!-- Filtres de catégories - Version améliorée -->
     <section class="filters-section">
       <div class="container">
-        <div class="filters">
-          <button 
-            class="filter-btn"
-            :class="{ active: !selectedCategory }"
-            @click="selectCategory(null)"
-          >
-            Tous les projets
+        <!-- Mobile: Select dropdown -->
+        <select v-model="selectedCategory" @change="currentPage = 1" class="mobile-filter">
+          <option :value="null">Tous les projets ({{ works.length }})</option>
+          <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+            {{ cat.name }} ({{ getCategoryCount(cat.id) }})
+          </option>
+        </select>
+
+        <!-- Desktop: Scroll horizontal avec chips -->
+        <div class="filters-desktop">
+          <button @click="scrollLeft" v-show="canScrollLeft" class="scroll-arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
           </button>
-          <button 
-            v-for="category in categories"
-            :key="category.id"
-            class="filter-btn"
-            :class="{ active: selectedCategory === category.id }"
-            @click="selectCategory(category.id)"
-          >
-            {{ category.name }}
+          
+          <div class="filters-scroll" ref="filtersContainer" @scroll="checkScroll">
+            <button 
+              :class="['filter-chip', { active: !selectedCategory }]"
+              @click="selectCategory(null)"
+            >
+              <span>Tous</span>
+              <span class="badge">{{ works.length }}</span>
+            </button>
+            <button 
+              v-for="cat in categories" :key="cat.id"
+              :class="['filter-chip', { active: selectedCategory === cat.id }]"
+              @click="selectCategory(cat.id)"
+            >
+              <span>{{ cat.name }}</span>
+              <span class="badge">{{ getCategoryCount(cat.id) }}</span>
+            </button>
+          </div>
+
+          <button @click="scrollRight" v-show="canScrollRight" class="scroll-arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
           </button>
         </div>
       </div>
@@ -52,14 +73,28 @@
     <!-- Grille d'œuvres -->
     <section id="works" class="works-section">
       <div class="container">
-        <div v-if="loading" class="loading">Chargement des projets...</div>
+        <!-- En-tête avec résultats -->
+        <div class="works-header">
+          <h2 class="works-title">{{ selectedCategoryName }}</h2>
+          <p class="works-count">{{ filteredWorks.length }} projet{{ filteredWorks.length > 1 ? 's' : '' }}</p>
+        </div>
+
+        <div v-if="loading" class="loading">
+          <div class="spinner"></div>
+          <p>Chargement des projets...</p>
+        </div>
         
         <div v-else-if="error" class="error">
           <p>{{ error }}</p>
         </div>
 
         <div v-else-if="filteredWorks.length === 0" class="empty">
-          <p>Aucun projet disponible pour le moment</p>
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <p>Aucun projet disponible pour cette catégorie</p>
         </div>
 
         <div v-else class="works-grid">
@@ -71,40 +106,97 @@
           />
         </div>
 
-        <!-- Pagination -->
-        <div v-if="totalPages > 1" class="pagination">
+        <!-- Info de pagination -->
+        <div v-if="filteredWorks.length > 0" class="pagination-info">
+          <p>
+            Affichage de 
+            <strong>{{ (currentPage - 1) * itemsPerPage + 1 }}</strong>
+            à 
+            <strong>{{ Math.min(currentPage * itemsPerPage, filteredWorks.length) }}</strong>
+            sur 
+            <strong>{{ filteredWorks.length }}</strong>
+            projet{{ filteredWorks.length > 1 ? 's' : '' }}
+          </p>
+        </div>
+
+        <!-- Pagination améliorée -->
+        <nav v-if="totalPages > 1" class="pagination" role="navigation" aria-label="Pagination">
           <button 
             @click="goToPage(currentPage - 1)" 
             :disabled="currentPage === 1"
-            class="pagination-btn pagination-arrow"
+            class="page-btn prev"
+            aria-label="Page précédente"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="15 18 9 12 15 6"/>
             </svg>
+            <span>Précédent</span>
           </button>
 
-          <div class="pagination-numbers">
-            <button
-              v-for="page in totalPages"
-              :key="page"
-              v-show="totalPages <= 7 || shouldShowPage(page)"
-              @click="goToPage(page)"
-              :class="['pagination-btn', 'pagination-number', { active: page === currentPage }]"
-            >
-              {{ page }}
-            </button>
+          <div class="page-numbers">
+            <template v-if="totalPages <= 7">
+              <!-- Afficher toutes les pages si <= 7 -->
+              <button 
+                v-for="page in totalPages" 
+                :key="page"
+                @click="goToPage(page)"
+                :class="['page-btn', 'page-num', { active: page === currentPage }]"
+                :aria-label="'Page ' + page"
+                :aria-current="page === currentPage ? 'page' : null"
+              >
+                {{ page }}
+              </button>
+            </template>
+
+            <template v-else>
+              <!-- Pagination intelligente pour > 7 pages -->
+              <button 
+                @click="goToPage(1)"
+                :class="['page-btn', 'page-num', { active: currentPage === 1 }]"
+                aria-label="Page 1"
+                :aria-current="currentPage === 1 ? 'page' : null"
+              >
+                1
+              </button>
+
+              <span v-if="currentPage > 3" class="ellipsis" aria-hidden="true">...</span>
+
+              <button 
+                v-for="page in middlePages" 
+                :key="page"
+                @click="goToPage(page)"
+                :class="['page-btn', 'page-num', { active: page === currentPage }]"
+                :aria-label="'Page ' + page"
+                :aria-current="page === currentPage ? 'page' : null"
+              >
+                {{ page }}
+              </button>
+
+              <span v-if="currentPage < totalPages - 2" class="ellipsis" aria-hidden="true">...</span>
+
+              <button 
+                @click="goToPage(totalPages)"
+                :class="['page-btn', 'page-num', { active: currentPage === totalPages }]"
+                :aria-label="'Page ' + totalPages"
+                :aria-current="currentPage === totalPages ? 'page' : null"
+              >
+                {{ totalPages }}
+              </button>
+            </template>
           </div>
 
           <button 
             @click="goToPage(currentPage + 1)" 
             :disabled="currentPage === totalPages"
-            class="pagination-btn pagination-arrow"
+            class="page-btn next"
+            aria-label="Page suivante"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <span>Suivant</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="9 18 15 12 9 6"/>
             </svg>
           </button>
-        </div>
+        </nav>
       </div>
     </section>
 
@@ -267,7 +359,7 @@
         <div class="footer-bottom">
           <p>© 2025 NAO Graphics. Tous droits réservés.</p>
           <p class="footer-credit">
-            Conçu & développé  par 
+            Conçu & développé par 
             <a href="https://github.com/ghn16" target="_blank">GBEHOUENOU Silvio</a>
           </p>
         </div>
@@ -277,7 +369,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useWorks } from '@/composables/useWorks'
 import { useCategories } from '@/composables/useCategories'
 import WorkCard from '@/components/public/WorkCard.vue'
@@ -285,10 +377,13 @@ import WorkCard from '@/components/public/WorkCard.vue'
 const { works, loading, error, fetchWorks } = useWorks()
 const { categories, fetchCategories } = useCategories()
 const selectedCategory = ref(null)
+const filtersContainer = ref(null)
+const canScrollLeft = ref(false)
+const canScrollRight = ref(false)
 
 // Pagination
 const currentPage = ref(1)
-const itemsPerPage = 12 // 12 œuvres par page
+const itemsPerPage = 6 // Réduit à 6 pour voir la pagination plus vite (augmenter à 12 en production)
 
 const filteredWorks = computed(() => {
   if (!selectedCategory.value) return works.value
@@ -301,36 +396,60 @@ const totalPages = computed(() =>
 
 const paginatedWorks = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return filteredWorks.value.slice(start, end)
+  return filteredWorks.value.slice(start, start + itemsPerPage)
 })
+
+// Pages du milieu pour la pagination
+const middlePages = computed(() => {
+  const current = currentPage.value
+  const total = totalPages.value
+  const pages = []
+  
+  const start = Math.max(2, current - 1)
+  const end = Math.min(total - 1, current + 1)
+  
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  
+  return pages
+})
+
+const selectedCategoryName = computed(() => {
+  if (!selectedCategory.value) return 'Tous les projets'
+  return categories.value.find(c => c.id === selectedCategory.value)?.name || 'Tous les projets'
+})
+
+const getCategoryCount = (catId) => {
+  return works.value.filter(w => w.category_id === catId).length
+}
+
+const selectCategory = (catId) => {
+  selectedCategory.value = catId
+  currentPage.value = 1
+}
 
 const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page
-    // Scroll vers la section works
-    document.getElementById('works')?.scrollIntoView({ behavior: 'smooth' })
+    document.getElementById('works')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 }
 
-// Réinitialiser la page lors du changement de catégorie
-const selectCategory = (categoryId) => {
-  selectedCategory.value = categoryId
-  currentPage.value = 1
+// Gestion scroll horizontal des filtres
+const checkScroll = () => {
+  const el = filtersContainer.value
+  if (!el) return
+  canScrollLeft.value = el.scrollLeft > 10
+  canScrollRight.value = el.scrollLeft < el.scrollWidth - el.clientWidth - 10
 }
 
-// Déterminer quelles pages afficher dans la pagination
-const shouldShowPage = (page) => {
-  const current = currentPage.value
-  const total = totalPages.value
-  
-  // Toujours afficher première et dernière
-  if (page === 1 || page === total) return true
-  
-  // Afficher les pages autour de la page courante
-  if (page >= current - 1 && page <= current + 1) return true
-  
-  return false
+const scrollLeft = () => {
+  filtersContainer.value?.scrollBy({ left: -250, behavior: 'smooth' })
+}
+
+const scrollRight = () => {
+  filtersContainer.value?.scrollBy({ left: 250, behavior: 'smooth' })
 }
 
 // Formulaire de contact
@@ -343,11 +462,9 @@ const formMessage = ref('')
 const formSuccess = ref(false)
 
 const handleSubmit = () => {
-  // Ici vous pouvez ajouter l'envoi via EmailJS ou autre service
   formSuccess.value = true
   formMessage.value = 'Message envoyé avec succès ! Je vous répondrai bientôt.'
   
-  // Reset form
   setTimeout(() => {
     form.value = { name: '', email: '', message: '' }
     formMessage.value = ''
@@ -355,15 +472,13 @@ const handleSubmit = () => {
 }
 
 onMounted(async () => {
-  await Promise.all([
-    fetchWorks(),
-    fetchCategories()
-  ])
+  await Promise.all([fetchWorks(), fetchCategories()])
+  await nextTick()
+  checkScroll()
 })
 </script>
-
 <style scoped>
-/* Hero Section */
+/* ===== HERO SECTION ===== */
 .hero {
   position: relative;
   min-height: 90vh;
@@ -430,7 +545,7 @@ onMounted(async () => {
   animation-delay: 0.4s;
 }
 
-
+/* ===== BUTTONS ===== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -444,7 +559,6 @@ onMounted(async () => {
   cursor: pointer;
   transition: all 0.3s ease;
 }
-
 
 .btn-accent {
   background: linear-gradient(135deg, #F59C1A 0%, #D48310 100%);
@@ -477,10 +591,16 @@ onMounted(async () => {
   width: 100%;
 }
 
-/* Filtres */
+/* ===== FILTRES AMÉLIORÉS ===== */
 .filters-section {
-  padding: 3rem 0;
-  background: white;
+  padding: 1.5rem 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid #F8F9FA;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .container {
@@ -489,45 +609,169 @@ onMounted(async () => {
   padding: 0 2rem;
 }
 
-.filters {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.filter-btn {
-  padding: 0.75rem 2rem;
-  font-size: 0.95rem;
+/* Mobile select dropdown */
+.mobile-filter {
+  display: none;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
   font-weight: 600;
-  background: white;
   color: #3A2665;
+  background: white;
   border: 2px solid #3A2665;
-  border-radius: 50px;
+  border-radius: 12px;
   cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%233A2665' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 3rem;
   transition: all 0.3s ease;
 }
 
-.filter-btn:hover,
-.filter-btn.active {
-  background: linear-gradient(135deg, #3A2665 0%, #1E183A 100%);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(58, 38, 101, 0.3);
+.mobile-filter:hover {
+  background-color: #F8F9FA;
 }
 
+.mobile-filter:focus {
+  outline: none;
+  border-color: #1E183A;
+  box-shadow: 0 0 0 3px rgba(58, 38, 101, 0.1);
+}
 
+/* Desktop filters avec scroll horizontal */
+.filters-desktop {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 
+.filters-scroll {
+  flex: 1;
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0.5rem 0;
+}
 
-/* Section des œuvres */
-.works-section {
-  padding: 4rem 0 6rem;
+.filters-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-chip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
   background: #F8F9FA;
+  color: #495057;
+  border: 2px solid transparent;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.filter-chip:hover {
+  background: white;
+  border-color: #3A2665;
+  color: #3A2665;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(58, 38, 101, 0.15);
+}
+
+.filter-chip.active {
+  background: linear-gradient(135deg, #3A2665 0%, #1E183A 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 6px 20px rgba(58, 38, 101, 0.3);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+}
+
+.filter-chip:hover .badge {
+  background: rgba(58, 38, 101, 0.1);
+}
+
+.filter-chip.active .badge {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.scroll-arrow {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 2px solid #E9ECEF;
+  border-radius: 50%;
+  color: #3A2665;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.scroll-arrow:hover {
+  border-color: #3A2665;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(58, 38, 101, 0.15);
+}
+
+.scroll-arrow:active {
+  transform: scale(0.95);
+}
+
+/* ===== WORKS SECTION ===== */
+.works-section {
+  padding: 3rem 0 5rem;
+  background: #F8F9FA;
+}
+
+.works-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #E9ECEF;
+}
+
+.works-title {
+  font-size: 2rem;
+  color: #1E183A;
+  margin: 0;
+  font-weight: 700;
+}
+
+.works-count {
+  font-size: 1rem;
+  color: #6C757D;
+  margin: 0;
+  font-weight: 500;
 }
 
 .works-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 2rem;
 }
 
@@ -538,7 +782,136 @@ onMounted(async () => {
   font-size: 1.125rem;
 }
 
-/* Contact Section */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #E9ECEF;
+  border-top-color: #3A2665;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty svg {
+  margin: 0 auto 1rem;
+  opacity: 0.3;
+}
+
+/* ===== PAGINATION AMÉLIORÉE ===== */
+.pagination-info {
+  text-align: center;
+  margin-top: 2rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #E9ECEF;
+}
+
+.pagination-info p {
+  margin: 0;
+  color: #6C757D;
+  font-size: 0.95rem;
+}
+
+.pagination-info strong {
+  color: #3A2665;
+  font-weight: 700;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #E9ECEF;
+}
+
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 1rem;
+  background: white;
+  border: 2px solid #E9ECEF;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.page-btn:hover:not(:disabled):not(.active) {
+  border-color: #3A2665;
+  color: #3A2665;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(58, 38, 101, 0.15);
+}
+
+.page-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.page-btn.active {
+  background: linear-gradient(135deg, #3A2665 0%, #1E183A 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 6px 20px rgba(58, 38, 101, 0.3);
+  transform: scale(1.05);
+}
+
+.page-numbers {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.page-num {
+  min-width: 44px;
+}
+
+.ellipsis {
+  padding: 0 0.5rem;
+  color: #ADB5BD;
+  font-weight: 600;
+  user-select: none;
+}
+
+.prev, .next {
+  font-weight: 600;
+}
+
+.prev svg {
+  margin-right: 0.25rem;
+}
+
+.next svg {
+  margin-left: 0.25rem;
+}
+
+/* ===== CONTACT SECTION ===== */
 .contact-section {
   padding: 6rem 0;
   background: white;
@@ -611,68 +984,6 @@ onMounted(async () => {
   margin: 0;
 }
 
-/* Pagination Styles */
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 4rem;
-  padding: 2rem 0;
-}
-
-.pagination-btn {
-  min-width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  border: 2px solid #E9ECEF;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #495057;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  border-color: #3A2665;
-  color: #3A2665;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(58, 38, 101, 0.15);
-}
-
-.pagination-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.pagination-btn.active {
-  background: linear-gradient(135deg, #3A2665 0%, #1E183A 100%);
-  color: white;
-  border-color: transparent;
-  box-shadow: 0 6px 20px rgba(58, 38, 101, 0.3);
-}
-
-.pagination-arrow {
-  color: #3A2665;
-}
-
-.pagination-arrow:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgba(58, 38, 101, 0.1) 0%, rgba(237, 0, 226, 0.1) 100%);
-}
-
-.pagination-numbers {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.pagination-number {
-  font-variant-numeric: tabular-nums;
-}
-
 /* Formulaire de contact */
 .contact-form-container {
   background: linear-gradient(135deg, rgba(58, 38, 101, 0.03) 0%, rgba(237, 0, 226, 0.03) 100%);
@@ -700,13 +1011,14 @@ onMounted(async () => {
   font-size: 1rem;
   font-family: inherit;
   transition: all 0.3s ease;
+  background: white;
 }
 
 .form-input:focus,
 .form-textarea:focus {
   outline: none;
   border-color: #3A2665;
-  background: white;
+  box-shadow: 0 0 0 3px rgba(58, 38, 101, 0.1);
 }
 
 .form-textarea {
@@ -725,14 +1037,16 @@ onMounted(async () => {
 .form-message.success {
   background: rgba(40, 167, 69, 0.1);
   color: #28A745;
+  border: 1px solid rgba(40, 167, 69, 0.2);
 }
 
 .form-message.error {
   background: rgba(220, 53, 69, 0.1);
   color: #DC3545;
+  border: 1px solid rgba(220, 53, 69, 0.2);
 }
 
-/* Footer */
+/* ===== FOOTER ===== */
 .footer {
   background: linear-gradient(135deg, #1E183A 0%, #3A2665 100%);
   color: white;
@@ -806,6 +1120,7 @@ onMounted(async () => {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
   color: white;
+  text-decoration: none;
   transition: all 0.3s ease;
 }
 
@@ -823,6 +1138,7 @@ onMounted(async () => {
 .footer-bottom p {
   color: rgba(255, 255, 255, 0.6);
   margin: 0.5rem 0;
+  font-size: 0.95rem;
 }
 
 .footer-credit a {
@@ -835,7 +1151,7 @@ onMounted(async () => {
   text-decoration: underline;
 }
 
-/* Animations */
+/* ===== ANIMATIONS ===== */
 .fade-in {
   animation: fadeIn 0.8s ease-out;
 }
@@ -875,7 +1191,23 @@ onMounted(async () => {
   }
 }
 
-/* Responsive */
+/* ===== RESPONSIVE ===== */
+@media (max-width: 968px) {
+  .contact-content {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  .footer-links {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .hero {
     min-height: 70vh;
@@ -890,22 +1222,74 @@ onMounted(async () => {
     width: 100%;
   }
 
-  .contact-content {
-    grid-template-columns: 1fr;
-    gap: 3rem;
+  /* Afficher mobile filter, masquer desktop */
+  .mobile-filter {
+    display: block;
   }
 
-  .footer-content {
+  .filters-desktop {
+    display: none;
+  }
+
+  .works-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .works-grid {
     grid-template-columns: 1fr;
-    gap: 3rem;
+    gap: 1.5rem;
+  }
+
+  /* Pagination responsive */
+  .page-btn span {
+    display: none;
+  }
+
+  .page-btn {
+    min-width: 40px;
+    height: 40px;
+    padding: 0;
+  }
+
+  .prev, .next {
+    width: 40px;
+  }
+
+  .pagination {
+    gap: 0.35rem;
   }
 
   .footer-links {
     grid-template-columns: 1fr;
   }
 
-  .works-grid {
-    grid-template-columns: 1fr;
+  .container {
+    padding: 0 1rem;
   }
 }
+
+@media (max-width: 480px) {
+  .works-title {
+    font-size: 1.5rem;
+  }
+
+  .page-num {
+    min-width: 36px;
+    height: 36px;
+    font-size: 0.85rem;
+  }
+
+  .prev, .next {
+    width: 36px;
+    height: 36px;
+  }
+
+  .prev svg, .next svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
 </style>
