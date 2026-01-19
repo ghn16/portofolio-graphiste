@@ -389,14 +389,39 @@ const filteredWorks = computed(() => {
   if (!selectedCategory.value) return works.value
   return works.value.filter(w => w.category_id === selectedCategory.value)
 })
+// Après filteredWorks, ajoute ce computed :
+const sortedWorks = computed(() => {
+  return [...filteredWorks.value].sort((a, b) => {
+    // Récupère l'image de couverture
+    const imageA = a.images?.find(img => img.is_cover) || a.images?.[0]
+    const imageB = b.images?.find(img => img.is_cover) || b.images?.[0]
+    
+    // Si pas d'image, met à la fin
+    if (!imageA) return 1
+    if (!imageB) return -1
+    
+    // Détecte le format (bannière = paysage)
+    const isLandscapeA = imageA.width > imageA.height
+    const isLandscapeB = imageB.width > imageB.height
+    
+    // Les portraits d'abord, bannières après
+    if (isLandscapeA && !isLandscapeB) return 1
+    if (!isLandscapeA && isLandscapeB) return -1
+    
+    return 0 // Garde l'ordre original sinon
+  })
+})
+
+
 
 const totalPages = computed(() => 
   Math.ceil(filteredWorks.value.length / itemsPerPage)
 )
 
+// Puis utilise sortedWorks au lieu de filteredWorks pour la pagination
 const paginatedWorks = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
-  return filteredWorks.value.slice(start, start + itemsPerPage)
+  return sortedWorks.value.slice(start, start + itemsPerPage)
 })
 
 // Pages du milieu pour la pagination
@@ -478,6 +503,7 @@ onMounted(async () => {
 })
 </script>
 <style scoped>
+/* ===== HERO SECTION ===== */
 /* ===== HERO SECTION ===== */
 .hero {
   position: relative;
@@ -774,6 +800,25 @@ onMounted(async () => {
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 2rem;
 }
+.works-grid > * {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Style pour forcer les images à s'adapter */
+.works-grid :deep(.work-card__image) {
+  background: #F5F5F5 !important;
+}
+
+.works-grid :deep(img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  }
 
 .loading, .error, .empty {
   text-align: center;
@@ -1289,6 +1334,20 @@ onMounted(async () => {
   .prev svg, .next svg {
     width: 16px;
     height: 16px;
+  }
+
+  /* Format compact des affiches sur mobile */
+  .works-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+/* Pour les très petits écrans - 3 colonnes ultra compactes */
+@media (max-width: 380px) {
+  .works-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
   }
 }
 

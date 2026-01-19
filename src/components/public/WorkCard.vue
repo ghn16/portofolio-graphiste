@@ -3,13 +3,13 @@
     :to="{ name: 'work-detail', params: { slug: work.slug } }"
     class="work-card"
   >
-    <div class="work-card__image">
+    <div class="work-image-wrapper">
       <img 
         :src="coverImage" 
         :alt="work.title"
         loading="lazy"
       >
-      <div class="work-card__overlay">
+      <div class="work-overlay">
         <span class="view-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -18,9 +18,9 @@
         </span>
       </div>
     </div>
-    <div class="work-card__content">
-      <span class="work-card__category">{{ work.category?.name }}</span>
-      <h3 class="work-card__title">{{ work.title }}</h3>
+    <div class="work-info">
+      <span class="work-category">{{ work.category?.name }}</span>
+      <h3 class="work-name">{{ work.title }}</h3>
     </div>
   </router-link>
 </template>
@@ -44,45 +44,43 @@ const coverImage = computed(() => {
 <style scoped>
 .work-card {
   display: block;
-  position: relative;
   text-decoration: none;
   color: inherit;
   background: white;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(58, 38, 101, 0.1);
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+  transition: all 0.4s ease;
 }
 
 .work-card:hover {
-  transform: translateY(-12px);
+  transform: translateY(-8px);
   box-shadow: 0 20px 40px rgba(58, 38, 101, 0.2);
 }
 
-.work-card__image {
+.work-image-wrapper {
   position: relative;
   width: 100%;
+  padding-top: 133.33%;
   overflow: hidden;
-  background: linear-gradient(135deg, #3A2665 0%, #1E183A 100%);
-  flex-shrink: 0;
+  background: #EAEAEA;
 }
 
-.work-card__image img {
+.work-image-wrapper img {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: auto;
-  display: block;
-  object-fit: contain;
+  height: 100%;
+  object-fit: cover;
   transition: transform 0.5s ease;
 }
 
-.work-card:hover .work-card__image img {
-  transform: scale(1.05);
+.work-card:hover .work-image-wrapper img {
+  transform: scale(1.1);
 }
 
-.work-card__overlay {
+.work-overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, transparent 0%, rgba(58, 38, 101, 0.8) 100%);
@@ -93,7 +91,7 @@ const coverImage = computed(() => {
   transition: opacity 0.4s ease;
 }
 
-.work-card:hover .work-card__overlay {
+.work-card:hover .work-overlay {
   opacity: 1;
 }
 
@@ -107,21 +105,21 @@ const coverImage = computed(() => {
   border-radius: 50%;
   color: white;
   transform: scale(0);
-  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transition: transform 0.4s ease;
 }
 
 .work-card:hover .view-icon {
   transform: scale(1);
 }
 
-.work-card__content {
+.work-info {
   padding: 1.5rem;
-  flex-grow: 1;
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
 }
 
-.work-card__category {
+.work-category {
   display: inline-block;
   padding: 0.35rem 1rem;
   font-size: 0.75rem;
@@ -131,26 +129,53 @@ const coverImage = computed(() => {
   background: linear-gradient(135deg, #3A2665 0%, #1E183A 100%);
   color: white;
   border-radius: 20px;
-  margin-bottom: 0.75rem;
   align-self: flex-start;
 }
 
-.work-card__title {
+.work-name {
   font-size: 1.25rem;
   font-weight: 700;
   color: #1E183A;
   margin: 0;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
-  .work-card__content {
-    padding: 1.25rem;
+  .work-info {
+    padding: 1rem;
   }
   
-  .work-card__title {
-    font-size: 1.1rem;
+  .work-name {
+    font-size: 1rem;
+  }
+  
+  .work-category {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.85rem;
+  }
+
+  .view-icon {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+@media (max-width: 480px) {
+  .work-info {
+    padding: 0.75rem;
+  }
+
+  .work-name {
+    font-size: 0.9rem;
+  }
+
+  .work-category {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.75rem;
   }
 }
 </style>

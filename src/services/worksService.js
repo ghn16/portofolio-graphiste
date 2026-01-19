@@ -11,6 +11,7 @@ export const worksService = {
         images:work_images(*)
       `)
       .eq('status', 'published')
+      .order('display_order', { ascending: true })
       .order('published_at', { ascending: false })
     
     if (categoryId) {
