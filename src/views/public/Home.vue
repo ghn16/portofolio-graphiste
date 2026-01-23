@@ -97,14 +97,15 @@
           <p>Aucun projet disponible pour cette catégorie</p>
         </div>
 
-        <div v-else class="works-grid">
-          <WorkCard 
-            v-for="work in paginatedWorks"
-            :key="work.id"
-            :work="work"
-            class="scale-in"
-          />
-        </div>
+        
+<!-- (Column CSS) -->
+<div v-else class="works-grid-aligned">
+  <WorkCard 
+    v-for="work in paginatedWorks"
+    :key="work.id"
+    :work="work"
+  />
+</div>
 
         <!-- Info de pagination -->
         <div v-if="filteredWorks.length > 0" class="pagination-info">
@@ -369,10 +370,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick,watch} from 'vue'
 import { useWorks } from '@/composables/useWorks'
 import { useCategories } from '@/composables/useCategories'
 import WorkCard from '@/components/public/WorkCard.vue'
+
 
 const { works, loading, error, fetchWorks } = useWorks()
 const { categories, fetchCategories } = useCategories()
@@ -381,9 +383,14 @@ const filtersContainer = ref(null)
 const canScrollLeft = ref(false)
 const canScrollRight = ref(false)
 
-// Pagination
 const currentPage = ref(1)
-const itemsPerPage = 6 // Réduit à 6 pour voir la pagination plus vite (augmenter à 12 en production)
+const itemsPerPage = 6
+
+
+
+
+// Pagination
+
 
 const filteredWorks = computed(() => {
   if (!selectedCategory.value) return works.value
@@ -795,63 +802,32 @@ onMounted(async () => {
   font-weight: 500;
 }
 
-.works-grid {
+/* ===== WORKS GRID - ALIGNED LAYOUT ===== */
+.works-grid-aligned {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
-}
-.works-grid > * {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  align-items: start;
   width: 100%;
-  overflow: hidden;
-  border-radius: 12px;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Style pour forcer les images à s'adapter */
-.works-grid :deep(.work-card__image) {
-  background: #F5F5F5 !important;
+.works-grid-aligned :deep(.work-card) {
+  height: fit-content;
 }
 
-.works-grid :deep(img) {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
+/* Responsive */
+@media (max-width: 968px) {
+  .works-grid-aligned {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
-
-.loading, .error, .empty {
-  text-align: center;
-  padding: 4rem 2rem;
-  color: #6C757D;
-  font-size: 1.125rem;
 }
 
-.loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+@media (max-width: 480px) {
+  .works-grid-aligned {
+    gap: 12px;
+  }
 }
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #E9ECEF;
-  border-top-color: #3A2665;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.empty svg {
-  margin: 0 auto 1rem;
-  opacity: 0.3;
-}
-
 /* ===== PAGINATION AMÉLIORÉE ===== */
 .pagination-info {
   text-align: center;

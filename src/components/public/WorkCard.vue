@@ -3,13 +3,13 @@
     :to="{ name: 'work-detail', params: { slug: work.slug } }"
     class="work-card"
   >
-    <div class="work-image-wrapper">
+    <div class="work-card__image">
       <img 
         :src="coverImage" 
         :alt="work.title"
         loading="lazy"
       >
-      <div class="work-overlay">
+      <div class="work-card__overlay">
         <span class="view-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -18,9 +18,9 @@
         </span>
       </div>
     </div>
-    <div class="work-info">
-      <span class="work-category">{{ work.category?.name }}</span>
-      <h3 class="work-name">{{ work.title }}</h3>
+    <div class="work-card__content">
+      <span class="work-card__category">{{ work.category?.name }}</span>
+      <h3 class="work-card__title">{{ work.title }}</h3>
     </div>
   </router-link>
 </template>
@@ -43,44 +43,45 @@ const coverImage = computed(() => {
 
 <style scoped>
 .work-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  position: relative;
   text-decoration: none;
   color: inherit;
   background: white;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(58, 38, 101, 0.1);
-  transition: all 0.4s ease;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  width: 100%;
 }
 
 .work-card:hover {
-  transform: translateY(-8px);
+  transform: translateY(-12px);
   box-shadow: 0 20px 40px rgba(58, 38, 101, 0.2);
 }
 
-.work-image-wrapper {
+.work-card__image {
   position: relative;
   width: 100%;
-  padding-top: 133.33%;
+  /* ❌ SUPPRIMÉ : padding-top: 133.33%; */
   overflow: hidden;
-  background: #EAEAEA;
+  background: #F5F5F5;
 }
 
-.work-image-wrapper img {
-  position: absolute;
-  top: 0;
-  left: 0;
+.work-card__image img {
+  /* ✅ MODIFIÉ : Garde le ratio original de l'image */
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  display: block;
   transition: transform 0.5s ease;
 }
 
-.work-card:hover .work-image-wrapper img {
+.work-card:hover .work-card__image img {
   transform: scale(1.1);
 }
 
-.work-overlay {
+.work-card__overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, transparent 0%, rgba(58, 38, 101, 0.8) 100%);
@@ -91,7 +92,7 @@ const coverImage = computed(() => {
   transition: opacity 0.4s ease;
 }
 
-.work-card:hover .work-overlay {
+.work-card:hover .work-card__overlay {
   opacity: 1;
 }
 
@@ -105,21 +106,23 @@ const coverImage = computed(() => {
   border-radius: 50%;
   color: white;
   transform: scale(0);
-  transition: transform 0.4s ease;
+  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 .work-card:hover .view-icon {
   transform: scale(1);
 }
 
-.work-info {
+.work-card__content {
   padding: 1.5rem;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  background: white;
 }
 
-.work-category {
+.work-card__category {
   display: inline-block;
   padding: 0.35rem 1rem;
   font-size: 0.75rem;
@@ -132,7 +135,7 @@ const coverImage = computed(() => {
   align-self: flex-start;
 }
 
-.work-name {
+.work-card__title {
   font-size: 1.25rem;
   font-weight: 700;
   color: #1E183A;
@@ -144,16 +147,35 @@ const coverImage = computed(() => {
   overflow: hidden;
 }
 
+
+.work-card__image {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #F5F5F5;
+  max-height: 600px; /* ✅ Limite la hauteur max */
+}
+
+.work-card__image img {
+  width: 100%;
+  height: auto;
+  max-height: 600px; /* ✅ Limite aussi l'image */
+  object-fit: cover;
+  display: block;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .work-info {
+  .work-card__content {
     padding: 1rem;
   }
   
-  .work-name {
+  .work-card__title {
     font-size: 1rem;
+    -webkit-line-clamp: 2;
   }
   
-  .work-category {
+  .work-card__category {
     font-size: 0.7rem;
     padding: 0.3rem 0.85rem;
   }
@@ -162,18 +184,24 @@ const coverImage = computed(() => {
     width: 48px;
     height: 48px;
   }
+
+  .view-icon svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 @media (max-width: 480px) {
-  .work-info {
+  .work-card__content {
     padding: 0.75rem;
   }
 
-  .work-name {
+  .work-card__title {
     font-size: 0.9rem;
+    line-height: 1.3;
   }
 
-  .work-category {
+  .work-card__category {
     font-size: 0.65rem;
     padding: 0.25rem 0.75rem;
   }

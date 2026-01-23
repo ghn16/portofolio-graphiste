@@ -1,27 +1,37 @@
 import { supabase } from './supabase'
 
 export const worksService = {
-  // Récupérer toutes les œuvres publiées (public)
-  async getPublished(categoryId = null) {
-    let query = supabase
-      .from('works')
-      .select(`
-        *,
-        category:categories(*),
-        images:work_images(*)
-      `)
-      .eq('status', 'published')
-      .order('display_order', { ascending: true })
-      .order('published_at', { ascending: false })
-    
-    if (categoryId) {
-      query = query.eq('category_id', categoryId)
-    }
-    
-    const { data, error } = await query
-    if (error) throw error
-    return data || []
-  },
+ // Récupérer toutes les œuvres publiées (public)
+async getPublished(categoryId = null) {
+  let query = supabase
+    .from('works')
+    .select(`
+      *,
+      category:categories(*),
+      images:work_images(*)
+    `)
+    .eq('status', 'published')
+    .order('display_order', { ascending: true })
+    .order('published_at', { ascending: false })
+  
+  if (categoryId) {
+    query = query.eq('category_id', categoryId)
+  }
+  
+  const { data, error } = await query
+  if (error) throw error
+  
+  // Trier les images de chaque work par display_order
+  if (data) {
+    data.forEach(work => {
+      if (work.images) {
+        work.images.sort((a, b) => a.display_order - b.display_order)
+      }
+    })
+  }
+  
+  return data || []
+},
 
   // Récupérer une œuvre par slug (public)
   async getBySlug(slug) {
