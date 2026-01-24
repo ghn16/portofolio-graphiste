@@ -1,7 +1,4 @@
-<!-- ============================================
-  FILE: src/components/admin/AdminLayout.vue
-  Layout avec sidebar et header pour toutes les pages admin
-============================================ -->
+
 <template>
   <div class="admin-layout">
     <!-- Sidebar -->

@@ -1,3 +1,4 @@
+
 <template>
   <router-link 
     :to="{ name: 'work-detail', params: { slug: work.slug } }"
@@ -64,13 +65,11 @@ const coverImage = computed(() => {
 .work-card__image {
   position: relative;
   width: 100%;
-  /* ❌ SUPPRIMÉ : padding-top: 133.33%; */
   overflow: hidden;
   background: #F5F5F5;
 }
 
 .work-card__image img {
-  /* ✅ MODIFIÉ : Garde le ratio original de l'image */
   width: 100%;
   height: auto;
   display: block;
@@ -145,23 +144,6 @@ const coverImage = computed(() => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-
-.work-card__image {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  background: #F5F5F5;
-  max-height: 600px; /* ✅ Limite la hauteur max */
-}
-
-.work-card__image img {
-  width: 100%;
-  height: auto;
-  max-height: 600px; /* ✅ Limite aussi l'image */
-  object-fit: cover;
-  display: block;
 }
 
 /* Responsive */

@@ -52,7 +52,25 @@ export const storageService = {
   },
 
   async addImageToWork(workId, imageUrl, storagePath, altText = '', isCover = false) {
-    // Si on définit une nouvelle cover, retirer le statut des autres
+  try {
+    // 1. Récupérer toutes les images de CE work pour trouver le max display_order
+    const { data: existingImages, error: fetchError } = await supabase
+      .from('work_images')
+      .select('display_order')
+      .eq('work_id', workId)
+      .order('display_order', { ascending: false })
+      .limit(1)
+    
+    if (fetchError) throw fetchError
+    
+    // 2. Le display_order sera max + 1, ou 0 si aucune image
+    const displayOrder = existingImages && existingImages.length > 0 
+      ? (existingImages[0].display_order || 0) + 1 
+      : 0
+    
+    console.log('Adding image with display_order:', displayOrder, 'for work:', workId)
+    
+    // 3. Si on définit une nouvelle cover, retirer le statut des autres
     if (isCover) {
       await supabase
         .from('work_images')
@@ -60,6 +78,7 @@ export const storageService = {
         .eq('work_id', workId)
     }
 
+    // 4. Insérer l'image avec le display_order
     const { data, error } = await supabase
       .from('work_images')
       .insert([{
@@ -67,15 +86,20 @@ export const storageService = {
         image_url: imageUrl,
         storage_path: storagePath,
         alt_text: altText,
-        is_cover: isCover
+        is_cover: isCover,
+        display_order: displayOrder
       }])
       .select()
       .single()
     
     if (error) throw error
-    return data
-  },
-
+    
+    return { success: true, data }
+  } catch (error) {
+    console.error('Error adding image to work:', error)
+    return { success: false, error: error.message }
+  }
+},
   async updateImageCover(imageId, workId) {
     // Retirer le statut cover de toutes les images de ce work
     await supabase
@@ -106,5 +130,7 @@ export const storageService = {
       .eq('id', imageId)
     
     if (error) throw error
+    
+    return { success: true }
   }
 }
