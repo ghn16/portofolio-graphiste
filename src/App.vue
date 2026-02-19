@@ -21,9 +21,6 @@ onMounted(() => {
 </script>
 
 <style>
-/* Import des styles globaux */
-@import './assets/styles/variables.css';
-@import './assets/styles/main.css';
 
 /* Styles de base pour #app */
 #app {

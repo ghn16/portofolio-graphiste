@@ -1,0 +1,92 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+
+const mobileOpen = ref(false)
+
+onMounted(() => {
+  const cursor = document.getElementById('cursor-glow')
+  if (cursor) {
+    document.addEventListener('mousemove', (e) => {
+      cursor.style.left = e.clientX + 'px'
+      cursor.style.top = e.clientY + 'px'
+    })
+  }
+})
+</script>
+
+<template>
+  <!-- Cursor glow -->
+  <div id="cursor-glow" class="cursor-glow hidden md:block"></div>
+
+  <nav class="fixed w-full z-50 bg-brand-purple-dark/80 backdrop-blur-md border-b border-brand-purple-main/50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+
+      <!-- Logo -->
+      <div class="flex items-center space-x-3 logo-container">
+        <!-- Navbar.vue : augmente légèrement -->
+<div class="w-12 h-12 bg-white rounded flex items-center justify-center p-1 overflow-hidden">
+          <img src="/public/logo-nao.jpeg"
+               alt="Logo Nao Graphics"
+               class="object-contain w-full h-full">
+        </div>
+        <span class="font-display text-2xl tracking-tighter uppercase font-bold">
+  Nao<span class="text-brand-yellow">.</span>
+</span>
+      </div>
+
+      <!-- Menu desktop -->
+      <div class="hidden md:flex space-x-8 font-medium uppercase text-sm tracking-widest">
+        <a href="#accueil" class="nav-link">Accueil</a>
+        <a href="#projets" class="nav-link">Portfolio</a>
+        <a href="#about" class="nav-link">À propos</a>
+        <a href="#contact"
+           class="px-4 py-2 bg-brand-purple-vibrant rounded-full hover:bg-brand-yellow hover:text-brand-purple-dark transition-colors duration-300">
+          Travaillons ensemble
+        </a>
+      </div>
+
+      <!-- Bouton hamburger mobile -->
+      <button class="md:hidden text-brand-yellow" @click="mobileOpen = !mobileOpen">
+        <svg v-if="!mobileOpen" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Menu mobile déroulant -->
+    <div v-if="mobileOpen"
+         class="md:hidden bg-brand-purple-dark border-t border-brand-purple-main/50 px-6 py-4 flex flex-col space-y-4">
+      <a href="#accueil" @click="mobileOpen = false" class="nav-link uppercase text-sm tracking-widest font-medium">Accueil</a>
+      <a href="#projets" @click="mobileOpen = false" class="nav-link uppercase text-sm tracking-widest font-medium">Portfolio</a>
+      <a href="#about" @click="mobileOpen = false" class="nav-link uppercase text-sm tracking-widest font-medium">À propos</a>
+      <a href="#contact" @click="mobileOpen = false"
+         class="px-4 py-2 bg-brand-purple-vibrant rounded-full text-center hover:bg-brand-yellow hover:text-brand-purple-dark transition-colors duration-300">
+        Travaillons ensemble
+      </a>
+    </div>
+  </nav>
+</template>
+
+<style scoped>
+.nav-link:after {
+  content: '';
+  display: block;
+  width: 0;
+  height: 2px;
+  background: #F59C1A;
+  transition: width .3s;
+}
+.nav-link:hover:after {
+  width: 100%;
+}
+
+.logo-container img {
+  transition: filter 0.3s ease;
+}
+.logo-container:hover img {
+  filter: drop-shadow(0 0 8px #F59C1A);
+}
+</style>
