@@ -6,6 +6,7 @@ import AboutSection from '@/components/public/AboutSection.vue'
 import SkillsBanner from '@/components/public/SkillsBanner.vue'
 import ContactSection from '@/components/public/ContactSection.vue'
 import FooterSection from '@/components/public/FooterSection.vue'
+import WhatsAppButton from '@/components/public/WhatsAppButton.vue'
 </script>
 
 <template>
@@ -17,5 +18,8 @@ import FooterSection from '@/components/public/FooterSection.vue'
     <SkillsBanner />
     <ContactSection />
     <FooterSection />
+
+    <!-- Bouton WhatsApp flottant sur toutes les pages -->
+    <WhatsAppButton phone="22964827383" />
   </div>
 </template>

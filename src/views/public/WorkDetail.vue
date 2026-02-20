@@ -1,160 +1,257 @@
 <template>
-  <div class="work-detail-page">
+  <div class="min-h-screen bg-brand-purple-dark text-white">
+
+    <!-- Navbar simple -->
+    <nav class="fixed w-full z-50 bg-brand-purple-dark/90 backdrop-blur-md border-b border-brand-purple-main/50">
+      <div class="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4 flex justify-between items-center">
+        <router-link to="/" class="flex items-center space-x-2">
+          <div class="w-9 h-9 bg-white rounded flex items-center justify-center p-1 overflow-hidden">
+            <img src="/logo-nao.jpeg" alt="Logo" class="object-contain w-full h-full">
+          </div>
+          <span class="font-display text-base md:text-xl tracking-tighter uppercase font-bold">
+            Nao<span class="text-brand-yellow">.</span>
+          </span>
+        </router-link>
+        <button @click="$router.back()"
+          class="flex items-center gap-2 px-4 py-2 border border-brand-purple-main/60 rounded-full
+                 text-sm font-bold uppercase tracking-wider hover:border-brand-yellow hover:text-brand-yellow transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          <span class="hidden sm:inline">Retour</span>
+        </button>
+      </div>
+    </nav>
+
     <!-- Loading -->
-    <div v-if="loading" class="loading-container">
-      <div class="spinner"></div>
-      <p>Chargement de l'œuvre...</p>
+    <div v-if="loading" class="min-h-screen flex flex-col items-center justify-center gap-6 pt-20">
+      <div class="w-14 h-14 rounded-full border-4 border-brand-purple-main border-t-brand-yellow animate-spin"></div>
+      <p class="text-gray-400 uppercase tracking-widest text-sm">Chargement...</p>
     </div>
 
-    <!-- Erreur / Non trouvé -->
-    <div v-else-if="error || !currentWork" class="error-container">
-      <div class="error-icon">
-        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
+    <!-- Erreur -->
+    <div v-else-if="error || !currentWork" class="min-h-screen flex flex-col items-center justify-center gap-6 px-4 pt-20">
+      <div class="w-24 h-24 rounded-full bg-brand-purple-main/50 flex items-center justify-center">
+        <svg class="h-12 w-12 text-brand-purple-vibrant" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <circle cx="12" cy="12" r="10" stroke-width="1.5"/>
+          <line x1="12" y1="8" x2="12" y2="12" stroke-width="2"/>
+          <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2"/>
         </svg>
       </div>
-      <h1>Œuvre non trouvée</h1>
-      <p>Cette œuvre n'existe pas ou n'est plus disponible.</p>
-      <router-link to="/" class="btn btn-primary btn-lg">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-        Retour au portfolio
+      <h1 class="text-2xl font-display font-bold">Projet non trouvé</h1>
+      <p class="text-gray-400 text-center">Ce projet n'existe pas ou n'est plus disponible.</p>
+      <router-link to="/"
+        class="px-8 py-3 bg-brand-yellow text-brand-purple-dark font-bold rounded-lg hover:scale-105 transition-transform">
+        ← Retour au portfolio
       </router-link>
     </div>
 
-    <!-- Contenu de l'œuvre -->
-    <div v-else class="work-detail">
-      <!-- Navigation -->
-      <nav class="breadcrumb">
-        <router-link to="/" class="breadcrumb-link">Portfolio</router-link>
-        <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-current">{{ currentWork.title }}</span>
-      </nav>
+    <!-- Contenu -->
+    <div v-else class="pt-20">
 
-      <!-- Header de l'œuvre -->
-      <header class="work-header">
-        <div class="work-header-content">
-          <span v-if="currentWork.category" class="work-category-badge">
-            {{ currentWork.category.name }}
-          </span>
-          <h1 class="work-title">{{ currentWork.title }}</h1>
-          <div class="work-meta">
-            <span class="meta-item">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
-              {{ formatDate(currentWork.created_at) }}
-            </span>
-            <span v-if="currentWork.images?.length" class="meta-item">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-              {{ currentWork.images.length }} image{{ currentWork.images.length > 1 ? 's' : '' }}
-            </span>
+      <!-- Hero du projet -->
+      <div class="relative overflow-hidden">
+        <!-- Image cover en pleine largeur -->
+        <div v-if="coverImage" class="relative h-[40vh] md:h-[60vh] w-full">
+          <img :src="coverImage.image_url" :alt="currentWork.title"
+               class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-linear-to-t from-brand-purple-dark via-brand-purple-dark/40 to-transparent"></div>
+        </div>
+        <!-- Fond dégradé si pas d'image cover -->
+        <div v-else class="h-32 md:h-48 bg-linear-to-b from-brand-purple-main/30 to-brand-purple-dark"></div>
+
+        <!-- Infos projet superposées -->
+        <div class="absolute bottom-0 left-0 right-0 px-4 md:px-8 pb-6 md:pb-10">
+          <div class="max-w-7xl mx-auto">
+            <!-- Breadcrumb -->
+            <div class="flex items-center gap-2 text-xs md:text-sm text-gray-400 mb-3">
+              <router-link to="/#projets" class="hover:text-brand-yellow transition-colors">Portfolio</router-link>
+              <span>/</span>
+              <span v-if="currentWork.category"
+                    class="px-3 py-1 bg-brand-purple-vibrant/80 text-white rounded-full text-xs font-bold uppercase tracking-wider">
+                {{ currentWork.category.name }}
+              </span>
+            </div>
+            <h1 class="font-display font-extrabold leading-tight text-white"
+                style="font-size: clamp(1.8rem, 5vw, 3.5rem);">
+              {{ currentWork.title }}
+            </h1>
+            <div class="flex flex-wrap items-center gap-4 mt-3 text-gray-400 text-xs md:text-sm">
+              <span class="flex items-center gap-1.5">
+                <svg class="h-4 w-4 text-brand-yellow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                  <polyline points="12 6 12 12 16 14" stroke-width="2"/>
+                </svg>
+                {{ formatDate(currentWork.created_at) }}
+              </span>
+              <span v-if="currentWork.images?.length" class="flex items-center gap-1.5">
+                <svg class="h-4 w-4 text-brand-yellow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5" stroke-width="2"/>
+                  <polyline points="21 15 16 10 5 21" stroke-width="2"/>
+                </svg>
+                {{ currentWork.images.length }} image{{ currentWork.images.length > 1 ? 's' : '' }}
+              </span>
+            </div>
           </div>
         </div>
-        <button @click="$router.back()" class="btn-back">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-          Retour
-        </button>
-      </header>
+      </div>
 
-      <!-- Galerie d'images -->
-      <section v-if="currentWork.images?.length" class="gallery-section">
-        <!-- Image principale -->
-        <div class="main-image-container">
-          <img 
-            :src="selectedImage.image_url" 
-            :alt="selectedImage.alt_text || currentWork.title"
-            class="main-image"
-            @click="openLightbox(selectedImageIndex)"
-          >
-          <button class="btn-fullscreen" @click="openLightbox(selectedImageIndex)">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-            </svg>
-          </button>
-        </div>
+      <!-- Corps de la page -->
+      <div class="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-16">
 
-        <!-- Thumbnails -->
-        <div v-if="currentWork.images.length > 1" class="thumbnails-container">
-          <button
-            v-for="(image, index) in currentWork.images"
-            :key="image.id"
-            class="thumbnail"
-            :class="{ active: selectedImageIndex === index }"
-            @click="selectImage(index)"
-          >
-            <img :src="image.image_url" :alt="image.alt_text || `Image ${index + 1}`">
-          </button>
-        </div>
-      </section>
+        <!-- Galerie -->
+        <section v-if="currentWork.images?.length" class="mb-12 md:mb-16">
 
-      <!-- Description -->
-      <section v-if="currentWork.description" class="description-section">
-        <h2>À propos du projet</h2>
-        <div class="description-content">
-          <p>{{ currentWork.description }}</p>
-        </div>
-      </section>
-
-      <!-- Lightbox -->
-      <Teleport to="body">
-        <div v-if="lightboxOpen" class="lightbox" @click.self="closeLightbox">
-          <button class="lightbox-close" @click="closeLightbox">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-          
-          <button 
-            v-if="currentWork.images.length > 1"
-            class="lightbox-nav lightbox-prev" 
-            @click="previousImage"
-            :disabled="lightboxIndex === 0"
-          >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
-          </button>
-
-          <img 
-            :src="currentWork.images[lightboxIndex]?.image_url" 
-            :alt="currentWork.images[lightboxIndex]?.alt_text"
-            class="lightbox-image"
-          >
-
-          <button 
-            v-if="currentWork.images.length > 1"
-            class="lightbox-nav lightbox-next" 
-            @click="nextImage"
-            :disabled="lightboxIndex === currentWork.images.length - 1"
-          >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </button>
-
-          <div class="lightbox-counter">
-            {{ lightboxIndex + 1 }} / {{ currentWork.images.length }}
+          <!-- Image principale -->
+          <div class="relative rounded-2xl overflow-hidden bg-brand-purple-main/30 mb-4 cursor-zoom-in group"
+               @click="openLightbox(selectedImageIndex)">
+            <img
+              :src="selectedImage.image_url"
+              :alt="selectedImage.alt_text || currentWork.title"
+              class="w-full max-h-[70vh] object-contain mx-auto block"
+            >
+            <!-- Bouton fullscreen -->
+            <button class="absolute bottom-4 right-4 w-11 h-11 rounded-full bg-brand-purple-dark/80 backdrop-blur-sm
+                           border border-brand-purple-main flex items-center justify-center
+                           opacity-0 group-hover:opacity-100 transition-all duration-300
+                           hover:bg-brand-yellow hover:border-brand-yellow hover:text-brand-purple-dark text-white">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+              </svg>
+            </button>
           </div>
+
+          <!-- Thumbnails -->
+          <div v-if="currentWork.images.length > 1"
+               class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            <button
+              v-for="(image, index) in currentWork.images"
+              :key="image.id"
+              @click="selectImage(index)"
+              :class="[
+                'flex-shrink-0 w-20 h-16 md:w-28 md:h-20 rounded-xl overflow-hidden transition-all duration-300 border-2',
+                selectedImageIndex === index
+                  ? 'border-brand-yellow scale-105 shadow-lg shadow-brand-yellow/20'
+                  : 'border-transparent opacity-60 hover:opacity-100 hover:border-brand-purple-main'
+              ]"
+            >
+              <img :src="image.image_url" :alt="image.alt_text || `Image ${index + 1}`"
+                   class="w-full h-full object-cover">
+            </button>
+          </div>
+        </section>
+
+        <!-- Description -->
+        <section v-if="currentWork.description"
+                 class="glass-card p-6 md:p-10 rounded-2xl mb-12">
+          <h2 class="text-xl md:text-2xl font-display font-bold mb-5 flex items-center gap-3">
+            <span class="w-1 h-6 bg-brand-yellow rounded-full"></span>
+            À propos du projet
+          </h2>
+          <p class="text-gray-300 leading-relaxed text-base md:text-lg whitespace-pre-wrap">
+            {{ currentWork.description }}
+          </p>
+        </section>
+
+        <!-- CTA bas de page -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 py-8 border-t border-brand-purple-main/30">
+          <button @click="$router.back()"
+            class="flex items-center gap-2 px-6 py-3 border border-brand-purple-main/60 rounded-full
+                   font-bold uppercase tracking-wider text-sm hover:border-brand-yellow hover:text-brand-yellow
+                   transition-all duration-300 w-full sm:w-auto justify-center">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Retour au portfolio
+          </button>
+          <a :href="`https://wa.me/22900000000?text=${encodeURIComponent('Bonjour Naomie, j\'ai vu votre projet ' + currentWork.title + ' et je souhaite discuter d\'un projet similaire.')}`"
+             target="_blank"
+             class="flex items-center gap-3 px-6 py-3 bg-brand-purple-vibrant rounded-full
+                    font-bold uppercase tracking-wider text-sm hover:bg-brand-yellow hover:text-brand-purple-dark
+                    transition-all duration-300 w-full sm:w-auto justify-center shadow-lg shadow-brand-purple-vibrant/30">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            Commander un projet similaire
+          </a>
         </div>
-      </Teleport>
+
+      </div>
     </div>
+
+    <!-- Lightbox -->
+    <Teleport to="body">
+      <div v-if="lightboxOpen"
+           class="fixed inset-0 z-[9999] bg-brand-purple-dark/95 backdrop-blur-md flex items-center justify-center p-4"
+           @click.self="closeLightbox">
+
+        <!-- Fermer -->
+        <button @click="closeLightbox"
+          class="absolute top-4 right-4 md:top-6 md:right-6 w-12 h-12 rounded-full
+                 bg-brand-purple-main/50 border border-brand-purple-main flex items-center justify-center
+                 hover:bg-brand-yellow hover:border-brand-yellow hover:text-brand-purple-dark text-white
+                 transition-all duration-300 hover:rotate-90">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+
+        <!-- Précédent -->
+        <button v-if="currentWork.images.length > 1"
+          @click="previousImage" :disabled="lightboxIndex === 0"
+          :class="[
+            'absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-11 h-11 md:w-12 md:h-12 rounded-full',
+            'border flex items-center justify-center transition-all duration-300',
+            lightboxIndex === 0
+              ? 'border-brand-purple-main/30 text-gray-600 opacity-30 cursor-not-allowed'
+              : 'border-brand-purple-main bg-brand-purple-main/50 hover:bg-brand-yellow hover:border-brand-yellow hover:text-brand-purple-dark text-white'
+          ]">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <polyline points="15 18 9 12 15 6" stroke-width="2"/>
+          </svg>
+        </button>
+
+        <!-- Image -->
+        <img
+          :src="currentWork.images[lightboxIndex]?.image_url"
+          :alt="currentWork.images[lightboxIndex]?.alt_text"
+          class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
+        >
+
+        <!-- Suivant -->
+        <button v-if="currentWork.images.length > 1"
+          @click="nextImage" :disabled="lightboxIndex === currentWork.images.length - 1"
+          :class="[
+            'absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-11 h-11 md:w-12 md:h-12 rounded-full',
+            'border flex items-center justify-center transition-all duration-300',
+            lightboxIndex === currentWork.images.length - 1
+              ? 'border-brand-purple-main/30 text-gray-600 opacity-30 cursor-not-allowed'
+              : 'border-brand-purple-main bg-brand-purple-main/50 hover:bg-brand-yellow hover:border-brand-yellow hover:text-brand-purple-dark text-white'
+          ]">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <polyline points="9 18 15 12 9 6" stroke-width="2"/>
+          </svg>
+        </button>
+
+        <!-- Compteur -->
+        <div class="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2
+                    px-5 py-2 rounded-full bg-brand-purple-main/60 backdrop-blur-sm
+                    border border-brand-purple-main text-sm font-bold">
+          <span class="text-brand-yellow">{{ lightboxIndex + 1 }}</span>
+          <span class="text-gray-400 mx-1">/</span>
+          <span class="text-gray-300">{{ currentWork.images.length }}</span>
+        </div>
+
+      </div>
+    </Teleport>
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useWorks } from '@/composables/useWorks'
 
@@ -165,15 +262,16 @@ const selectedImageIndex = ref(0)
 const lightboxOpen = ref(false)
 const lightboxIndex = ref(0)
 
-const selectedImage = computed(() => {
-  return currentWork.value?.images?.[selectedImageIndex.value] || 
-         currentWork.value?.images?.[0] || 
-         { image_url: '', alt_text: '' }
+const coverImage = computed(() => {
+  if (!currentWork.value?.images?.length) return null
+  return currentWork.value.images.find(i => i.is_cover) || currentWork.value.images[0]
 })
 
-const selectImage = (index) => {
-  selectedImageIndex.value = index
-}
+const selectedImage = computed(() => {
+  return currentWork.value?.images?.[selectedImageIndex.value] || { image_url: '', alt_text: '' }
+})
+
+const selectImage = (index) => { selectedImageIndex.value = index }
 
 const openLightbox = (index) => {
   lightboxIndex.value = index
@@ -186,31 +284,16 @@ const closeLightbox = () => {
   document.body.style.overflow = ''
 }
 
-const previousImage = () => {
-  if (lightboxIndex.value > 0) {
-    lightboxIndex.value--
-  }
-}
-
-const nextImage = () => {
-  if (lightboxIndex.value < currentWork.value.images.length - 1) {
-    lightboxIndex.value++
-  }
-}
+const previousImage = () => { if (lightboxIndex.value > 0) lightboxIndex.value-- }
+const nextImage = () => { if (lightboxIndex.value < currentWork.value.images.length - 1) lightboxIndex.value++ }
 
 const formatDate = (date) => {
   if (!date) return ''
-  return new Date(date).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
+  return new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-// Gestion du clavier pour la lightbox
 const handleKeyboard = (e) => {
   if (!lightboxOpen.value) return
-  
   if (e.key === 'Escape') closeLightbox()
   if (e.key === 'ArrowLeft') previousImage()
   if (e.key === 'ArrowRight') nextImage()
@@ -220,448 +303,14 @@ onMounted(() => {
   fetchWorkBySlug(route.params.slug)
   window.addEventListener('keydown', handleKeyboard)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyboard)
+  document.body.style.overflow = ''
+})
 </script>
 
 <style scoped>
-.work-detail-page {
-  min-height: 100vh;
-  background: #F8F9FA;
-}
-
-/* Loading & Error */
-.loading-container,
-.error-container {
-  min-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 2rem;
-}
-
-.spinner {
-  width: 60px;
-  height: 60px;
-  border: 5px solid #E9ECEF;
-  border-top-color: #3A2665;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 1.5rem;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.error-icon {
-  width: 120px;
-  height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.2) 100%);
-  border-radius: 50%;
-  color: #DC3545;
-  margin-bottom: 2rem;
-}
-
-.error-container h1 {
-  color: #1E183A;
-  margin-bottom: 1rem;
-}
-
-.error-container p {
-  color: #6C757D;
-  margin-bottom: 2rem;
-}
-
-/* Work Detail */
-.work-detail {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-/* Breadcrumb */
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-  font-size: 0.95rem;
-}
-
-.breadcrumb-link {
-  color: #3A2665;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.breadcrumb-link:hover {
-  color: #F59C1A;
-}
-
-.breadcrumb-separator {
-  color: #CED4DA;
-}
-
-.breadcrumb-current {
-  color: #6C757D;
-}
-
-/* Header */
-.work-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 2rem;
-  margin-bottom: 3rem;
-}
-
-.work-header-content {
-  flex: 1;
-}
-
-.work-category-badge {
-  display: inline-block;
-  padding: 0.5rem 1.25rem;
-  background: linear-gradient(135deg, #3A2665 0%, #1E183A 100%);
-  color: white;
-  border-radius: 25px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 1rem;
-}
-
-.work-title {
-  font-size: 3rem;
-  font-weight: 900;
-  color: #1E183A;
-  margin: 0 0 1.5rem 0;
-  line-height: 1.2;
-}
-
-.work-meta {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #6C757D;
-  font-size: 1rem;
-}
-
-.meta-item svg {
-  flex-shrink: 0;
-  color: #3A2665;
-}
-
-.btn-back {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
-  background: white;
-  border: 2px solid #E9ECEF;
-  border-radius: 12px;
-  color: #3A2665;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-back:hover {
-  background: #3A2665;
-  color: white;
-  border-color: #3A2665;
-  transform: translateX(-4px);
-}
-
-/* Galerie */
-.gallery-section {
-  margin-bottom: 4rem;
-}
-
-.main-image-container {
-  position: relative;
-  width: 100%;
-  margin-bottom: 1.5rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.main-image {
-  max-width: 100%;
-  width: auto;
-  height: auto;
-  max-height: 70vh;
-  object-fit: contain;
-  cursor: zoom-in;
-  display: block;
-  border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(58, 38, 101, 0.2);
-}
-
-.btn-fullscreen {
-  position: absolute;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: none;
-  border-radius: 50%;
-  color: #3A2665;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.btn-fullscreen:hover {
-  background: #F59C1A;
-  color: white;
-  transform: scale(1.1);
-}
-
-/* Thumbnails */
-.thumbnails-container {
-  display: flex;
-  gap: 1rem;
-  overflow-x: auto;
-  padding: 0.5rem 0;
-}
-
-.thumbnail {
-  flex-shrink: 0;
-  width: 120px;
-  height: 90px;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 3px solid transparent;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: white;
-  padding: 0;
-}
-
-.thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.thumbnail:hover {
-  border-color: #F59C1A;
-  transform: translateY(-4px);
-}
-
-.thumbnail.active {
-  border-color: #3A2665;
-  box-shadow: 0 4px 15px rgba(58, 38, 101, 0.3);
-}
-
-/* Description */
-.description-section {
-  background: white;
-  padding: 3rem;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(58, 38, 101, 0.08);
-}
-
-.description-section h2 {
-  font-size: 2rem;
-  color: #1E183A;
-  margin: 0 0 1.5rem 0;
-}
-
-.description-content {
-  font-size: 1.125rem;
-  line-height: 1.8;
-  color: #495057;
-}
-
-.description-content p {
-  margin: 0 0 1.5rem 0;
-  white-space: pre-wrap;
-}
-
-.description-content p:last-child {
-  margin-bottom: 0;
-}
-
-/* Lightbox */
-.lightbox {
-  position: fixed;
-  inset: 0;
-  background: rgba(30, 24, 58, 0.95);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 2rem;
-}
-
-.lightbox-close {
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  z-index: 10;
-}
-
-.lightbox-close:hover {
-  background: #F59C1A;
-  border-color: #F59C1A;
-  transform: rotate(90deg);
-}
-
-.lightbox-image {
-  max-width: 90%;
-  max-height: 90vh;
-  object-fit: contain;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-}
-
-.lightbox-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.lightbox-nav:hover:not(:disabled) {
-  background: #F59C1A;
-  border-color: #F59C1A;
-}
-
-.lightbox-nav:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.lightbox-prev {
-  left: 2rem;
-}
-
-.lightbox-next {
-  right: 2rem;
-}
-
-.lightbox-counter {
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 0.75rem 1.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 25px;
-  color: white;
-  font-weight: 600;
-}
-
-/* Boutons globaux */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 2rem;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #3A2665 0%, #1E183A 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(58, 38, 101, 0.3);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(58, 38, 101, 0.4);
-}
-
-.btn-lg {
-  padding: 1.125rem 2.5rem;
-  font-size: 1.125rem;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .work-detail {
-    padding: 1rem;
-  }
-
-  .work-header {
-    flex-direction: column;
-  }
-
-  .work-title {
-    font-size: 2rem;
-  }
-
-  .description-section {
-    padding: 2rem 1.5rem;
-  }
-
-  .thumbnail {
-    width: 100px;
-    height: 75px;
-  }
-
-  .lightbox-nav {
-    width: 48px;
-    height: 48px;
-  }
-
-  .lightbox-prev {
-    left: 1rem;
-  }
-
-  .lightbox-next {
-    right: 1rem;
-  }
-}
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
 </style>
