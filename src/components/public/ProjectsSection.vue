@@ -56,7 +56,7 @@ onMounted(async () => {
           </h2>
           <h3 class="text-3xl md:text-5xl font-display font-bold">PORTFOLIO</h3>
         </div>
-        <span class="text-gray-500 text-sm">Projets 2024-2025</span>
+        <span class="text-gray-500 text-sm">Projets 2023-2026</span>
       </div>
 
       <!-- Pills scroll horizontal -->
